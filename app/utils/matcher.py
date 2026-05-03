@@ -1,17 +1,20 @@
 import os
 from PIL import Image
-import imagehash
 from app import db
 from app.models.models import LostItem, FoundItem, MatchRecord, SystemConfig
 from flask import current_app
 
 try:
+    import imagehash
+    IMAGEHASH_AVAILABLE = True
+except ImportError:
+    IMAGEHASH_AVAILABLE = False
+
+try:
     from app.utils.semantic_matcher import compute_semantic_similarity
     SEMANTIC_MATCHER_AVAILABLE = True
-    print("高级匹配模块已加载")
 except ImportError as e:
     SEMANTIC_MATCHER_AVAILABLE = False
-    print(f"语义匹配模块未加载: {e}")
 
 ADVANCED_MATCHING = SEMANTIC_MATCHER_AVAILABLE
 
@@ -86,6 +89,8 @@ class MatchingEngine:
         return count
     
     def compute_image_hash(self, image_path):
+        if not IMAGEHASH_AVAILABLE:
+            return None
         try:
             if not image_path:
                 return None
@@ -106,6 +111,8 @@ class MatchingEngine:
             return None
     
     def compute_hash_similarity(self, hash1, hash2):
+        if not IMAGEHASH_AVAILABLE:
+            return 0.0
         if not hash1 or not hash2:
             return 0.0
         
