@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}登录 - 城市失物招领系统{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow" style="background: rgba(10,10,26,0.9); border: 1px solid rgba(0,212,255,0.3); border-radius: 15px; backdrop-filter: blur(10px);">
+                <div class="card-body p-5">
+                    <h3 class="text-center mb-4" style="color: #00d4ff;">
+                        <i class="bi bi-box-arrow-in-right"></i> 用户登录
+                    </h3>
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            <label class="form-label" style="color:#d0d0e0;">账号</label>
+                            {{ form.username(class="form-control", placeholder="用户名 / 邮箱 / 手机号", style="background: rgba(255,255,255,0.08); border: 1px solid rgba(0,212,255,0.3); color:#ffffff; border-radius: 8px;") }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" style="color:#d0d0e0;">{{ form.password.label }}</label>
+                            {{ form.password(class="form-control", placeholder="请输入密码", style="background: rgba(255,255,255,0.08); border: 1px solid rgba(0,212,255,0.3); color:#ffffff; border-radius: 8px;") }}
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="remember" name="remember" style="background-color: rgba(255,255,255,0.1); border-color: rgba(0,212,255,0.4);">
+                            <label class="form-check-label" for="remember" style="color:#d0d0e0;">记住我</label>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn" style="background: linear-gradient(135deg, #00d4ff, #7b2cbf); color: white; border: none; border-radius: 10px; padding: 10px; font-size: 1rem;">
+                                <i class="bi bi-box-arrow-in-right"></i> 登录
+                            </button>
+                        </div>
+                    </form>
+                    <hr style="border-color: rgba(0,212,255,0.2);">
+                    <div class="text-center">
+                        <a href="{{ url_for('auth.forgot_password') }}" style="color: #00d4ff;" class="small me-3">忘记密码？</a>
+                        <span class="small" style="color:#d0d0e0;">还没有账号？<a href="{{ url_for('auth.register') }}" style="color: #00d4ff;">立即注册</a></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+.form-control::placeholder { color: rgba(176,176,192,0.5); }
+.form-control:focus { background: rgba(255,255,255,0.12) !important; border-color: #00d4ff !important; color:#ffffff !important; box-shadow: 0 0 0 0.2rem rgba(0,212,255,0.15) !important; }
+.form-check-input:checked { background-color: #00d4ff !important; border-color: #00d4ff !important; }
+</style>
+{% endblock %}

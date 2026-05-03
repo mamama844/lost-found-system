@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}发布寻物启事{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" style="color:#00d4ff;">首页</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('lost.list_items') }}" style="color:#00d4ff;">寻物启事</a></li>
+            <li class="breadcrumb-item active" style="color:#d0d0e0;">发布寻物</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card" style="background:rgba(10,10,26,0.9);border:1px solid rgba(0,212,255,0.2);border-radius:12px;">
+                <div class="card-body p-4">
+                    <h3 class="mb-4" style="color:#00d4ff;"><i class="bi bi-plus-circle me-2"></i>发布寻物启事</h3>
+                    <form method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <label class="form-label" style="color:#d0d0e0;">标题 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="title" required placeholder="请简要描述丢失的物品" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.3);color:#ffffff;border-radius:8px;">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" style="color:#d0d0e0;">分类 <span class="text-danger">*</span></label>
+                            <select name="category_id" class="form-select" required style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.3);color:#ffffff;border-radius:8px;">
+                                <option value="">请选择分类</option>
+                                {% for cat in categories|default([]) %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" style="color:#d0d0e0;">详细描述 <span class="text-danger">*</span></label>
+                            <textarea name="description" class="form-control" rows="5" required placeholder="请详细描述物品特征、丢失经过等" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.3);color:#ffffff;border-radius:8px;"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" style="color:#d0d0e0;">丢失地点 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="location" required placeholder="请输入丢失地点" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.3);color:#ffffff;border-radius:8px;">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" style="color:#d0d0e0;">丢失时间 <span class="text-danger">*</span></label>
+                                <input type="datetime-local" class="form-control" name="lost_time" required style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.3);color:#ffffff;border-radius:8px;">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" style="color:#d0d0e0;">联系方式</label>
+                            <input type="text" class="form-control" name="contact_info" placeholder="手机号/邮箱等" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.3);color:#ffffff;border-radius:8px;">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" style="color:#d0d0e0;">上传图片</label>
+                            <input type="file" class="form-control" name="images" multiple accept="image/*" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.3);color:#ffffff;border-radius:8px;">
+                            <small style="color:#a0a0b0;">支持多张图片上传</small>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn" style="background:linear-gradient(135deg,#00d4ff,#7b2cbf);color:white;border:none;border-radius:10px;padding:12px;">
+                                <i class="bi bi-send me-1"></i>发布寻物启事
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+.form-control::placeholder { color: rgba(176,176,192,0.5); }
+.form-control:focus { background: rgba(255,255,255,0.12) !important; border-color: #00d4ff !important; color:#ffffff !important; box-shadow: 0 0 0 0.2rem rgba(0,212,255,0.15) !important; }
+</style>
+{% endblock %}

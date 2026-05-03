@@ -1,0 +1,184 @@
+{% extends "admin/base.html" %}
+
+{% block title %}用户管理{% endblock %}
+
+{% block content %}
+<div class="top-bar">
+    <h5><i class="bi bi-people me-2"></i>用户管理</h5>
+    <div class="d-flex align-items-center gap-3">
+        <span class="text-muted">共 {{ users.total }} 个用户</span>
+        <a href="{{ url_for('admin.export_users') }}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-download me-1"></i>导出
+        </a>
+    </div>
+</div>
+
+<div class="content-card">
+    <div class="mb-3">
+        <form method="GET" class="row g-2">
+            <div class="col-auto">
+                <input type="text" class="form-control" name="search" placeholder="搜索用户名/邮箱/手机号" value="{{ search }}">
+            </div>
+            <div class="col-auto">
+                <select name="role" class="form-select">
+                    <option value="">全部角色</option>
+                    <option value="admin" {% if role == 'admin' %}selected{% endif %}>管理员</option>
+                    <option value="user" {% if role == 'user' %}selected{% endif %}>普通用户</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <select name="status" class="form-select">
+                    <option value="">全部状态</option>
+                    <option value="active" {% if status == 'active' %}selected{% endif %}>正常</option>
+                    <option value="disabled" {% if status == 'disabled' %}selected{% endif %}>已禁用</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-search me-1"></i>搜索</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>用户</th>
+                    <th>邮箱</th>
+                    <th>联系电话</th>
+                    <th>信用评分</th>
+                    <th>状态</th>
+                    <th>角色</th>
+                    <th>注册时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users.items %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#00d4ff,#7b2cbf);display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:0.9rem;">{{ user.username[0]|upper }}</div>
+                            <div>
+                                <div style="color:white;"><strong>{{ user.username }}</strong></div>
+                                <small class="text-muted">{{ user.real_name or '-' }}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.phone or '-' }}</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div style="width:80px;height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden;">
+                                <div style="height:100%;width:{{ user.credit_score }}%;background:{% if user.credit_score >= 80 %}#28a745{% elif user.credit_score >= 50 %}#ffc107{% else %}#dc3545{% endif %};border-radius:4px;"></div>
+                            </div>
+                            <span>{{ user.credit_score }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        {% if user.is_active %}
+                        <span class="badge bg-success">正常</span>
+                        {% else %}
+                        <span class="badge bg-danger">已禁用</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user.is_admin %}
+                        <span class="badge" style="background:linear-gradient(135deg,#00d4ff,#7b2cbf);">管理员</span>
+                        {% else %}
+                        <span class="badge bg-secondary">普通用户</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else '-' }}</td>
+                    <td>
+                        {% if user.id != current_user.id %}
+                        <button class="btn btn-sm btn-outline-primary btn-action" onclick="toggleAdmin({{ user.id }}, {{ user.is_admin|tojson }})" title="切换管理员权限">
+                            <i class="bi bi-shield{% if user.is_admin %}-fill{% endif %}"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning btn-action" onclick="toggleUser({{ user.id }}, {{ user.is_active|tojson }})" title="{% if user.is_active %}禁用{% else %}启用{% endif %}">
+                            <i class="bi bi-{% if user.is_active %}slash-circle{% else %}check-circle{% endif %}"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger btn-action" onclick="deleteUser({{ user.id }})" title="删除">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                        <a href="{{ url_for('admin.user_logs', id=user.id) }}" class="btn btn-sm btn-outline-info btn-action" title="查看日志">
+                            <i class="bi bi-clock-history"></i>
+                        </a>
+                        {% else %}
+                        <span class="text-muted small">当前用户</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if users.pages > 1 %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if users.has_prev %}
+            <li class="page-item"><a class="page-link" href="{{ url_for('admin.users', page=users.prev_num, search=search, role=role, status=status) }}">上一页</a></li>
+            {% endif %}
+            {% for page_num in users.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page_num %}
+                <li class="page-item {% if page_num == users.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.users', page=page_num, search=search, role=role, status=status) }}">{{ page_num }}</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+            {% if users.has_next %}
+            <li class="page-item"><a class="page-link" href="{{ url_for('admin.users', page=users.next_num, search=search, role=role, status=status) }}">下一页</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleAdmin(userId, isAdmin) {
+    if (!confirm(isAdmin ? '确定要取消该用户的管理员权限吗？' : '确定要将该用户设为管理员吗？')) return;
+    fetch('/admin/user/' + userId + '/admin', {
+        method: 'POST',
+        headers: Object.assign({'Content-Type': 'application/json'}, getCsrfHeaders())
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+        if (data.success) { alert(data.message); location.reload(); }
+        else { alert(data.message); }
+    });
+}
+
+function toggleUser(userId, isActive) {
+    if (!confirm(isActive ? '确定要禁用该用户吗？' : '确定要启用该用户吗？')) return;
+    fetch('/admin/user/' + userId + '/toggle', {
+        method: 'POST',
+        headers: Object.assign({'Content-Type': 'application/json'}, getCsrfHeaders())
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+        if (data.success) { alert(data.message); location.reload(); }
+        else { alert(data.message); }
+    });
+}
+
+function deleteUser(userId) {
+    if (!confirm('确定要删除该用户吗？此操作不可恢复！')) return;
+    fetch('/admin/user/' + userId + '/delete', {
+        method: 'POST',
+        headers: Object.assign({'Content-Type': 'application/json'}, getCsrfHeaders())
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+        if (data.success) { alert(data.message); location.reload(); }
+        else { alert(data.message); }
+    });
+}
+</script>
+{% endblock %}

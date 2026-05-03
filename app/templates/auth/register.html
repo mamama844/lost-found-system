@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}注册 - 城市失物招领系统{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="card shadow" style="background: rgba(10,10,26,0.9); border: 1px solid rgba(0,212,255,0.3); border-radius: 15px; backdrop-filter: blur(10px);">
+                <div class="card-body p-5">
+                    <h3 class="text-center mb-4" style="color: #00d4ff;">
+                        <i class="bi bi-person-plus"></i> 用户注册
+                    </h3>
+                    <form method="POST" id="register-form">
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            <label class="form-label" style="color:#d0d0e0;">{{ form.username.label }} <span class="text-danger">*</span></label>
+                            {{ form.username(class="form-control", placeholder="请输入用户名", style="background: rgba(255,255,255,0.08); border: 1px solid rgba(0,212,255,0.3); color:#ffffff; border-radius: 8px;") }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" style="color:#d0d0e0;">{{ form.email.label }} <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                {{ form.email(class="form-control", placeholder="请输入邮箱", id="email", style="background: rgba(255,255,255,0.08); border: 1px solid rgba(0,212,255,0.3); color:#ffffff; border-radius: 8px 0 0 8px;") }}
+                                <button type="button" class="btn" id="send-email-code" onclick="sendCode('email')" style="background: rgba(0,212,255,0.15); border: 1px solid rgba(0,212,255,0.3); border-left: none; color: #00d4ff; border-radius: 0 8px 8px 0; white-space: nowrap;">
+                                    发送验证码
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" style="color:#d0d0e0;">邮箱验证码 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="email-code" name="email_code" placeholder="请输入邮箱验证码" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(0,212,255,0.3); color:#ffffff; border-radius: 8px;">
+                            <div id="email-code-display" class="mt-2" style="display:none; padding: 10px; background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3); border-radius: 8px; text-align: center;">
+                                <small style="color:#a0a0b0;">您的邮箱验证码为：</small>
+                                <span id="email-code-value" style="color: #00d4ff; font-size: 1.5rem; font-weight: bold; letter-spacing: 5px;"></span>
+                                <br><small style="color:#a0a0b0;">（模拟发送，实际项目中将通过邮件发送）</small>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" style="color:#d0d0e0;">{{ form.phone.label }}</label>
+                            <div class="input-group">
+                                {{ form.phone(class="form-control", placeholder="请输入手机号（选填）", id="phone", style="background: rgba(255,255,255,0.08); border: 1px solid rgba(0,212,255,0.3); color:#ffffff; border-radius: 8px 0 0 8px;") }}
+                                <button type="button" class="btn" id="send-phone-code" onclick="sendCode('phone')" style="background: rgba(0,212,255,0.15); border: 1px solid rgba(0,212,255,0.3); border-left: none; color: #00d4ff; border-radius: 0 8px 8px 0; white-space: nowrap;">
+                                    发送验证码
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" style="color:#d0d0e0;">手机验证码</label>
+                            <input type="text" class="form-control" id="phone-code" name="phone_code" placeholder="请输入手机验证码（选填）" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(0,212,255,0.3); color:#ffffff; border-radius: 8px;">
+                            <div id="phone-code-display" class="mt-2" style="display:none; padding: 10px; background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3); border-radius: 8px; text-align: center;">
+                                <small style="color:#a0a0b0;">您的手机验证码为：</small>
+                                <span id="phone-code-value" style="color: #00d4ff; font-size: 1.5rem; font-weight: bold; letter-spacing: 5px;"></span>
+                                <br><small style="color:#a0a0b0;">（模拟发送，实际项目中将通过短信发送）</small>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" style="color:#d0d0e0;">{{ form.password.label }} <span class="text-danger">*</span></label>
+                                {{ form.password(class="form-control", placeholder="请输入密码(至少6位)", style="background: rgba(255,255,255,0.08); border: 1px solid rgba(0,212,255,0.3); color:#ffffff; border-radius: 8px;") }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" style="color:#d0d0e0;">{{ form.password2.label }} <span class="text-danger">*</span></label>
+                                {{ form.password2(class="form-control", placeholder="请确认密码", style="background: rgba(255,255,255,0.08); border: 1px solid rgba(0,212,255,0.3); color:#ffffff; border-radius: 8px;") }}
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" style="color:#d0d0e0;">{{ form.real_name.label }}</label>
+                            {{ form.real_name(class="form-control", placeholder="真实姓名（选填）", style="background: rgba(255,255,255,0.08); border: 1px solid rgba(0,212,255,0.3); color:#ffffff; border-radius: 8px;") }}
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn" style="background: linear-gradient(135deg, #00d4ff, #7b2cbf); color: white; border: none; border-radius: 10px; padding: 10px; font-size: 1rem;">
+                                <i class="bi bi-person-plus"></i> 注册
+                            </button>
+                        </div>
+                    </form>
+                    <hr style="border-color: rgba(0,212,255,0.2);">
+                    <p class="text-center mb-0" style="color:#d0d0e0;">
+                        已有账号？<a href="{{ url_for('auth.login') }}" style="color: #00d4ff;">立即登录</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+.form-control::placeholder { color: rgba(176,176,192,0.5); }
+.form-control:focus { background: rgba(255,255,255,0.12) !important; border-color: #00d4ff !important; color:#ffffff !important; box-shadow: 0 0 0 0.2rem rgba(0,212,255,0.15) !important; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function sendCode(type) {
+    var btnId = type === 'email' ? 'send-email-code' : 'send-phone-code';
+    var inputId = type === 'email' ? 'email' : 'phone';
+    var value = document.getElementById(inputId).value.trim();
+
+    if (!value) {
+        alert('请先填写' + (type === 'email' ? '邮箱' : '手机号'));
+        return;
+    }
+
+    var btn = document.getElementById(btnId);
+    btn.disabled = true;
+    btn.textContent = '发送中...';
+
+    fetch('/send-code', {
+        method: 'POST',
+        headers: Object.assign({'Content-Type': 'application/json'}, getCsrfHeaders()),
+        body: JSON.stringify({type: type, target: value})
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        if (data.success) {
+            var code = data.code;
+            var displayId = type === 'email' ? 'email-code-display' : 'phone-code-display';
+            var valueId = type === 'email' ? 'email-code-value' : 'phone-code-value';
+            document.getElementById(displayId).style.display = 'block';
+            document.getElementById(valueId).textContent = code;
+
+            var countdown = 60;
+            var timer = setInterval(function() {
+                countdown--;
+                btn.textContent = countdown + '秒后重发';
+                if (countdown <= 0) {
+                    clearInterval(timer);
+                    btn.disabled = false;
+                    btn.textContent = '发送验证码';
+                }
+            }, 1000);
+        } else {
+            alert(data.message);
+            btn.disabled = false;
+            btn.textContent = '发送验证码';
+        }
+    })
+    .catch(function() {
+        alert('发送失败，请重试');
+        btn.disabled = false;
+        btn.textContent = '发送验证码';
+    });
+}
+</script>
+{% endblock %}

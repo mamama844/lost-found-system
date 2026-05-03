@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}寻物启事{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 style="color:#00d4ff;"><i class="bi bi-search me-2"></i>寻物启事</h3>
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('lost.create') }}" class="btn" style="background:linear-gradient(135deg,#00d4ff,#7b2cbf);color:white;border:none;border-radius:10px;">
+            <i class="bi bi-plus-circle me-1"></i>发布寻物
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="card mb-4" style="background:rgba(10,10,26,0.9);border:1px solid rgba(0,212,255,0.2);border-radius:12px;">
+        <div class="card-body p-3">
+            <form method="GET" class="row g-2">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" name="keyword" placeholder="搜索关键词..." value="{{ keyword|default('') }}" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.3);color:#ffffff;border-radius:8px;">
+                </div>
+                <div class="col-md-3">
+                    <select name="category" class="form-select" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.3);color:#ffffff;border-radius:8px;">
+                        <option value="">全部分类</option>
+                        {% for cat in categories|default([]) %}
+                        <option value="{{ cat.id }}" {% if category_id|default('') == cat.id|string %}selected{% endif %}>{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="status" class="form-select" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.3);color:#ffffff;border-radius:8px;">
+                        <option value="">全部状态</option>
+                        <option value="open" {% if status|default('') == 'open' %}selected{% endif %}>寻找中</option>
+                        <option value="found" {% if status|default('') == 'found' %}selected{% endif %}>已找到</option>
+                        <option value="closed" {% if status|default('') == 'closed' %}selected{% endif %}>已关闭</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn w-100" style="background:rgba(0,212,255,0.15);border:1px solid rgba(0,212,255,0.3);color:#00d4ff;border-radius:8px;">
+                        <i class="bi bi-search me-1"></i>搜索
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for item in items|default([]) %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100" style="background:rgba(10,10,26,0.9);border:1px solid rgba(0,212,255,0.2);border-radius:12px;transition:all 0.3s;">
+                {% if item.image_paths %}
+                {% set imgs = item.image_paths|from_json %}
+                <img src="/{{ imgs[0] }}" class="card-img-top" style="height:200px;object-fit:cover;border-radius:12px 12px 0 0;">
+                {% else %}
+                <div class="card-img-top d-flex align-items-center justify-content-center" style="height:200px;background:rgba(0,212,255,0.05);border-radius:12px 12px 0 0;">
+                    <i class="bi bi-image" style="font-size:3rem;color:rgba(0,212,255,0.3);"></i>
+                </div>
+                {% endif %}
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="card-title" style="color:#00d4ff;">{{ item.title[:25] }}{% if item.title|length > 25 %}...{% endif %}</h6>
+                        {% if item.status == 'open' %}
+                        <span class="badge bg-warning">寻找中</span>
+                        {% elif item.status == 'found' %}
+                        <span class="badge bg-success">已找到</span>
+                        {% else %}
+                        <span class="badge bg-secondary">已关闭</span>
+                        {% endif %}
+                    </div>
+                    <p class="card-text small" style="color:#d0d0e0;">{{ item.description[:80] }}{% if item.description|length > 80 %}...{% endif %}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small style="color:#a0a0b0;"><i class="bi bi-geo-alt me-1"></i>{{ item.location[:15] if item.location else '-' }}</small>
+                        <a href="{{ url_for('lost.detail', id=item.id) }}" class="btn btn-sm" style="background:rgba(0,212,255,0.15);border:1px solid rgba(0,212,255,0.3);color:#00d4ff;border-radius:6px;">查看详情</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-center py-5">
+            <i class="bi bi-inbox" style="font-size:4rem;color:rgba(0,212,255,0.3);"></i>
+            <p class="mt-3" style="color:#a0a0b0;">暂无寻物启事</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if pagination|default(none) and pagination.pages > 1 %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+            <li class="page-item"><a class="page-link" href="{{ url_for('lost.list_items', page=pagination.prev_num, keyword=keyword|default(''), category=category_id|default(''), status=status|default('')) }}">上一页</a></li>
+            {% endif %}
+            {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if p %}
+            <li class="page-item {% if p == pagination.page %}active{% endif %}"><a class="page-link" href="{{ url_for('lost.list_items', page=p, keyword=keyword|default(''), category=category_id|default(''), status=status|default('')) }}">{{ p }}</a></li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">...</span></li>
+            {% endif %}
+            {% endfor %}
+            {% if pagination.has_next %}
+            <li class="page-item"><a class="page-link" href="{{ url_for('lost.list_items', page=pagination.next_num, keyword=keyword|default(''), category=category_id|default(''), status=status|default('')) }}">下一页</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

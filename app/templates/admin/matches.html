@@ -1,0 +1,162 @@
+{% extends "admin/base.html" %}
+
+{% block title %}匹配记录管理 - 管理后台{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0"><i class="bi bi-diagram-3 me-2"></i>匹配记录管理</h4>
+        <a href="{{ url_for('admin.match_config') }}" class="btn btn-outline-primary">
+            <i class="bi bi-gear me-1"></i>匹配参数配置
+        </a>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">总匹配数</h6>
+                    <h2 class="mb-0">{{ matches.total }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <h6 class="card-title">待确认</h6>
+                    <h2 class="mb-0">{{ matches.items|selectattr('status', 'equalto', 'pending')|list|length }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-title">已确认</h6>
+                    <h2 class="mb-0">{{ matches.items|selectattr('status', 'equalto', 'confirmed')|list|length }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-secondary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">已拒绝</h6>
+                    <h2 class="mb-0">{{ matches.items|selectattr('status', 'equalto', 'rejected')|list|length }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <form method="GET" class="row g-2">
+                <div class="col-auto">
+                    <select name="status" class="form-select">
+                        <option value="all" {% if status == 'all' %}selected{% endif %}>全部状态</option>
+                        <option value="pending" {% if status == 'pending' %}selected{% endif %}>待确认</option>
+                        <option value="confirmed" {% if status == 'confirmed' %}selected{% endif %}>已确认</option>
+                        <option value="rejected" {% if status == 'rejected' %}selected{% endif %}>已拒绝</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">筛选</button>
+                </div>
+            </form>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>丢失物品</th>
+                            <th>拾获物品</th>
+                            <th>相似度</th>
+                            <th>文本相似度</th>
+                            <th>图像相似度</th>
+                            <th>状态</th>
+                            <th>创建时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for match in matches.items %}
+                        <tr>
+                            <td>{{ match.id }}</td>
+                            <td>
+                                {% if match.lost_item %}
+                                <a href="{{ url_for('lost.detail', id=match.lost_item.id) }}" target="_blank">
+                                    {{ match.lost_item.title[:20] }}{% if match.lost_item.title|length > 20 %}...{% endif %}
+                                </a>
+                                {% else %}
+                                <span class="text-muted">已删除</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if match.found_item %}
+                                <a href="{{ url_for('found.detail', id=match.found_item.id) }}" target="_blank">
+                                    {{ match.found_item.title[:20] }}{% if match.found_item.title|length > 20 %}...{% endif %}
+                                </a>
+                                {% else %}
+                                <span class="text-muted">已删除</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="progress" style="width: 100px; height: 20px;">
+                                    <div class="progress-bar {% if match.similarity_score >= 0.7 %}bg-success{% elif match.similarity_score >= 0.5 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                         style="width: {{ match.similarity_score * 100 }}%">
+                                        {{ (match.similarity_score * 100)|round(1) }}%
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ (match.text_similarity * 100)|round(1) }}%</td>
+                            <td>{{ (match.image_similarity * 100)|round(1) }}%</td>
+                            <td>
+                                {% if match.status == 'pending' %}
+                                <span class="badge bg-warning">待确认</span>
+                                {% elif match.status == 'confirmed' %}
+                                <span class="badge bg-success">已确认</span>
+                                {% else %}
+                                <span class="badge bg-secondary">已拒绝</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ match.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">暂无匹配记录</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if matches.pages > 1 %}
+            <nav>
+                <ul class="pagination justify-content-center">
+                    {% if matches.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.matches', page=matches.prev_num, status=status) }}">上一页</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in matches.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                        {% if page_num %}
+                        <li class="page-item {% if page_num == matches.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('admin.matches', page=page_num, status=status) }}">{{ page_num }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if matches.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.matches', page=matches.next_num, status=status) }}">下一页</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}修改个人信息 - 城市失物招领系统{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title" style="color: var(--primary-color);">个人中心</h5>
+                    <hr style="border-color: var(--border-color);">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('main.profile') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-person me-2"></i>个人中心
+                        </a>
+                        <a href="{{ url_for('auth.edit_profile') }}" class="btn btn-primary">
+                            <i class="bi bi-gear me-2"></i>修改信息
+                        </a>
+                        <a href="{{ url_for('auth.change_password') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-key me-2"></i>修改密码
+                        </a>
+                        <a href="{{ url_for('auth.credit_records') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-star me-2"></i>信用记录
+                        </a>
+                        <a href="{{ url_for('auth.notifications') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-bell me-2"></i>消息通知
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <div class="card" style="border: 1px solid rgba(0,212,255,0.2);">
+                <div class="card-header" style="background: rgba(0,212,255,0.1); border-color: rgba(0,212,255,0.2);">
+                    <h5 class="mb-0" style="color: #00d4ff;"><i class="bi bi-person-gear me-2"></i>修改个人信息</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="row">
+                            <div class="col-md-4 text-center mb-4">
+                                <div class="position-relative d-inline-block">
+                                    <img src="{% if current_user.avatar and current_user.avatar.startswith('uploads/') %}/{{ current_user.avatar }}{% else %}{{ url_for('static', filename=current_user.avatar) }}{% endif %}" 
+                                         class="rounded-circle img-thumbnail" 
+                                         style="width: 150px; height: 150px; object-fit: cover; border-color: rgba(0,212,255,0.3);"
+                                         alt="头像">
+                                    <label class="btn btn-sm position-absolute bottom-0 end-0 rounded-circle" 
+                                           style="width: 40px; height: 40px; background: linear-gradient(135deg, #00d4ff, #7b2cbf); color: white;">
+                                        <i class="bi bi-camera"></i>
+                                        <input type="file" name="avatar" accept="image/*" style="display: none;">
+                                    </label>
+                                </div>
+                                <p class="small mt-2" style="color:#a0a0b0;">点击更换头像</p>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label class="form-label" style="color:#d0d0e0;">用户名</label>
+                                    <input type="text" class="form-control" value="{{ current_user.username }}" disabled style="background: rgba(255,255,255,0.05); border: 1px solid rgba(0,212,255,0.2); color:#a0a0b0; border-radius: 8px;">
+                                    <small style="color:#a0a0b0;">用户名不可修改</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" style="color:#d0d0e0;">邮箱</label>
+                                    <input type="email" class="form-control" name="email" value="{{ current_user.email }}" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(0,212,255,0.3); color:#ffffff; border-radius: 8px;">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" style="color:#d0d0e0;">真实姓名</label>
+                                    <input type="text" class="form-control" name="real_name" value="{{ current_user.real_name or '' }}" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(0,212,255,0.3); color:#ffffff; border-radius: 8px;">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" style="color:#d0d0e0;">联系电话</label>
+                                    <input type="text" class="form-control" name="phone" value="{{ current_user.phone or '' }}" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(0,212,255,0.3); color:#ffffff; border-radius: 8px;">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" style="color:#d0d0e0;">信用评分</label>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1" style="height: 25px; background: rgba(255,255,255,0.1);">
+                                            <div class="progress-bar {% if current_user.credit_score >= 80 %}bg-success{% elif current_user.credit_score >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                 style="width: {{ current_user.credit_score }}%">
+                                                {{ current_user.credit_score }}
+                                            </div>
+                                        </div>
+                                        <span class="ms-2" style="color:#d0d0e0;">/ 100</span>
+                                    </div>
+                                    <small style="color:#a0a0b0;">信用评分过低将限制部分功能</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" style="color:#d0d0e0;">注册时间</label>
+                                    <input type="text" class="form-control" value="{{ current_user.created_at.strftime('%Y-%m-%d %H:%M') }}" disabled style="background: rgba(255,255,255,0.05); border: 1px solid rgba(0,212,255,0.2); color:#a0a0b0; border-radius: 8px;">
+                                </div>
+                            </div>
+                        </div>
+                        <hr style="border-color: rgba(0,212,255,0.2);">
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('auth.change_password') }}" class="btn btn-outline-warning">
+                                <i class="bi bi-key me-1"></i>修改密码
+                            </a>
+                            <div>
+                                <a href="{{ url_for('main.profile') }}" class="btn btn-outline-secondary me-2">返回</a>
+                                <button type="submit" class="btn" style="background: linear-gradient(135deg, #00d4ff, #7b2cbf); color: white; border: none; border-radius: 10px; padding: 8px 20px;">
+                                    <i class="bi bi-check-lg me-1"></i>保存修改
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+.form-control::placeholder { color: rgba(176,176,192,0.5); }
+.form-control:focus { background: rgba(255,255,255,0.12) !important; border-color: #00d4ff !important; color:#ffffff !important; box-shadow: 0 0 0 0.2rem rgba(0,212,255,0.15) !important; }
+</style>
+{% endblock %}

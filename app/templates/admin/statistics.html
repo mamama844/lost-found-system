@@ -1,0 +1,160 @@
+{% extends "admin/base.html" %}
+
+{% block title %}数据统计 - 管理后台{% endblock %}
+
+{% block extra_css %}
+<style>
+.stat-card {
+    background: rgba(10,10,26,0.9);
+    border: 1px solid rgba(0,212,255,0.15);
+    border-radius: 15px;
+    padding: 25px 20px;
+    text-align: center;
+    transition: all 0.3s;
+}
+.stat-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(0,212,255,0.35);
+    box-shadow: 0 10px 30px rgba(0,212,255,0.1);
+}
+.stat-card .stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    font-size: 1.3rem;
+}
+.stat-card .stat-number {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.1;
+}
+.stat-card .stat-label {
+    color:#a0a0b0;
+    font-size: 0.9rem;
+    margin-top: 6px;
+}
+.trend-card {
+    background: rgba(10,10,26,0.9);
+    border: 1px solid rgba(0,212,255,0.15);
+    border-radius: 15px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 style="color:#00d4ff;"><i class="bi bi-bar-chart me-2"></i>数据统计</h4>
+    <div>
+        <a href="?period=week" class="btn btn-sm {% if period == 'week' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="border-radius:20px;">近7天</a>
+        <a href="?period=month" class="btn btn-sm {% if period == 'month' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="border-radius:20px;">近30天</a>
+        <a href="?period=year" class="btn btn-sm {% if period == 'year' %}btn-primary{% else %}btn-outline-primary{% endif %}" style="border-radius:20px;">近1年</a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:linear-gradient(135deg,#00d4ff,#7b2cbf);color:white;">
+                <i class="bi bi-people"></i>
+            </div>
+            <div class="stat-number" style="color:#00d4ff;">{{ stats.new_users }}</div>
+            <div class="stat-label">新增用户</div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:linear-gradient(135deg,#ff5252,#ff1744);color:white;">
+                <i class="bi bi-search-heart"></i>
+            </div>
+            <div class="stat-number" style="color:#ff5252;">{{ stats.new_lost }}</div>
+            <div class="stat-label">新增丢失物品</div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:linear-gradient(135deg,#00c853,#64dd17);color:white;">
+                <i class="bi bi-hand-thumbs-up"></i>
+            </div>
+            <div class="stat-number" style="color:#00c853;">{{ stats.new_found }}</div>
+            <div class="stat-label">新增拾获物品</div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:linear-gradient(135deg,#7b2cbf,#9c27b0);color:white;">
+                <i class="bi bi-diagram-3"></i>
+            </div>
+            <div class="stat-number" style="color:#7b2cbf;">{{ stats.new_matches }}</div>
+            <div class="stat-label">新增匹配</div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:linear-gradient(135deg,#00c853,#00d4ff);color:white;">
+                <i class="bi bi-check-circle"></i>
+            </div>
+            <div class="stat-number" style="color:#00c853;">{{ stats.confirmed_matches }}</div>
+            <div class="stat-label">确认匹配</div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:linear-gradient(135deg,#ffc107,#ff9800);color:white;">
+                <i class="bi bi-percent"></i>
+            </div>
+            <div class="stat-number" style="color:#ffc107;">{{ match_success_rate }}%</div>
+            <div class="stat-label">匹配成功率</div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:linear-gradient(135deg,#00d4ff,#7b2cbf);color:white;">
+                <i class="bi bi-chat-dots"></i>
+            </div>
+            <div class="stat-number" style="color:#00d4ff;">{{ stats.new_posts }}</div>
+            <div class="stat-label">新增帖子</div>
+        </div>
+    </div>
+</div>
+
+<div class="trend-card">
+    <div class="card-header" style="background:rgba(10,10,26,0.95);border-bottom:1px solid rgba(0,212,255,0.15);padding:15px 20px;">
+        <h6 style="color:#00d4ff;margin:0;"><i class="bi bi-graph-up me-2"></i>每日趋势</h6>
+    </div>
+    <div class="card-body" style="padding:20px;">
+        <div class="table-responsive">
+            <table class="table table-hover" style="color:#ffffff;">
+                <thead>
+                    <tr style="border-bottom:1px solid rgba(0,212,255,0.15);">
+                        <th style="color:#a0a0b0;">日期</th>
+                        <th style="color:#a0a0b0;">新用户</th>
+                        <th style="color:#a0a0b0;">丢失物品</th>
+                        <th style="color:#a0a0b0;">拾获物品</th>
+                        <th style="color:#a0a0b0;">匹配</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for day in daily_stats %}
+                    <tr style="border-bottom:1px solid rgba(0,212,255,0.08);">
+                        <td>{{ day.date }}</td>
+                        <td style="color:#00d4ff;">{{ day.users }}</td>
+                        <td style="color:#ff5252;">{{ day.lost }}</td>
+                        <td style="color:#00c853;">{{ day.found }}</td>
+                        <td style="color:#7b2cbf;">{{ day.matches }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5" class="text-center" style="color:#a0a0b0;padding:30px;">暂无数据</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

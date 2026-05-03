@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+
+{% block title %}智能匹配 - 城市失物招领系统{% endblock %}
+
+{% block extra_css %}
+<style>
+    .match-header {
+        background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(123, 44, 191, 0.1) 100%);
+        padding: 40px 0;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    
+    .match-header h2 {
+        color: white;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+    
+    .match-header p {
+        color: var(--text-muted);
+    }
+    
+    .tech-tags {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .tech-tag {
+        background: rgba(0, 212, 255, 0.1);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        padding: 6px 15px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        color: var(--primary-color);
+    }
+    
+    .match-card {
+        background: var(--bg-card);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--border-color);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .match-card:hover {
+        border-color: rgba(0, 212, 255, 0.3);
+    }
+    
+    .match-score {
+        text-align: center;
+        padding: 15px;
+    }
+    
+    .score-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 10px;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    
+    .score-high {
+        background: linear-gradient(135deg, rgba(0, 200, 83, 0.2) 0%, rgba(100, 221, 23, 0.2) 100%);
+        border: 2px solid #00c853;
+        color: #00c853;
+    }
+    
+    .score-medium {
+        background: linear-gradient(135deg, rgba(255, 152, 0, 0.2) 0%, rgba(255, 193, 7, 0.2) 100%);
+        border: 2px solid #ff9800;
+        color: #ff9800;
+    }
+    
+    .score-low {
+        background: linear-gradient(135deg, rgba(255, 82, 82, 0.2) 0%, rgba(255, 23, 68, 0.2) 100%);
+        border: 2px solid #ff5252;
+        color: #ff5252;
+    }
+    
+    .score-label {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+    
+    .item-info h5 {
+        color: white;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+    
+    .item-info p {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+    }
+    
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+    
+    .detail-label {
+        color: var(--text-muted);
+    }
+    
+    .detail-value {
+        color: white;
+        font-weight: 500;
+    }
+    
+    .match-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+    
+    .match-actions .btn {
+        flex: 1;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: var(--text-muted);
+        margin-bottom: 20px;
+    }
+    
+    .empty-state h4 {
+        color: white;
+        margin-bottom: 10px;
+    }
+    
+    .empty-state p {
+        color: var(--text-muted);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="match-header">
+    <div class="container">
+        <h2><i class="bi bi-diagram-3 me-2"></i>智能匹配结果</h2>
+        <p>基于多维度相似度算法，为您自动匹配可能的相关物品</p>
+        <div class="tech-tags">
+            <span class="tech-tag"><i class="bi bi-cpu me-1"></i>Jieba分词</span>
+            <span class="tech-tag"><i class="bi bi-bar-chart me-1"></i>TF-IDF</span>
+            <span class="tech-tag"><i class="bi bi-image me-1"></i>pHash</span>
+            <span class="tech-tag"><i class="bi bi-calculator me-1"></i>相似度融合</span>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="mb-3 d-flex gap-2">
+        <a href="{{ url_for('match.list_matches', status='all') }}" class="btn {% if status == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm" style="border-radius:20px;">全部</a>
+        <a href="{{ url_for('match.list_matches', status='pending') }}" class="btn {% if status == 'pending' %}btn-warning{% else %}btn-outline-warning{% endif %} btn-sm" style="border-radius:20px;">待确认</a>
+        <a href="{{ url_for('match.list_matches', status='confirmed') }}" class="btn {% if status == 'confirmed' %}btn-success{% else %}btn-outline-success{% endif %} btn-sm" style="border-radius:20px;">已确认</a>
+        <a href="{{ url_for('match.list_matches', status='rejected') }}" class="btn {% if status == 'rejected' %}btn-secondary{% else %}btn-outline-secondary{% endif %} btn-sm" style="border-radius:20px;">已拒绝</a>
+    </div>
+    {% if matches %}
+    {% for match in matches %}
+    <div class="match-card">
+        <div class="row align-items-center">
+            <div class="col-md-2">
+                <div class="match-score">
+                    <div class="score-circle {% if match.similarity_score >= 0.7 %}score-high{% elif match.similarity_score >= 0.5 %}score-medium{% else %}score-low{% endif %}">
+                        {{ (match.similarity_score * 100)|round(0)|int }}%
+                    </div>
+                    <div class="score-label">匹配度</div>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="item-info">
+                    <h5><span class="badge bg-danger me-2">丢失</span>{{ match.lost_item.title }}</h5>
+                    <p><i class="bi bi-geo-alt me-1"></i>{{ match.lost_item.location or '未填写' }}</p>
+                    <p><i class="bi bi-calendar me-1"></i>{{ match.lost_item.created_at.strftime('%Y-%m-%d') }}</p>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="item-info">
+                    <h5><span class="badge bg-success me-2">拾获</span>{{ match.found_item.title }}</h5>
+                    <p><i class="bi bi-geo-alt me-1"></i>{{ match.found_item.location or '未填写' }}</p>
+                    <p><i class="bi bi-calendar me-1"></i>{{ match.found_item.created_at.strftime('%Y-%m-%d') }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <hr style="border-color: var(--border-color);">
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="detail-row">
+                    <span class="detail-label">文本相似度</span>
+                    <span class="detail-value">{{ (match.text_similarity * 100)|round(1) }}%</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">图像相似度</span>
+                    <span class="detail-value">{{ (match.image_similarity * 100)|round(1) }}%</span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="detail-row">
+                    <span class="detail-label">匹配时间</span>
+                    <span class="detail-value">{{ match.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">状态</span>
+                    <span class="detail-value">
+                        {% if match.status == 'pending' %}
+                        <span class="badge bg-warning">待确认</span>
+                        {% elif match.status == 'confirmed' %}
+                        <span class="badge bg-success">已确认</span>
+                        {% else %}
+                        <span class="badge bg-secondary">已拒绝</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        {% if match.status == 'pending' %}
+        <div class="match-actions">
+            <a href="{{ url_for('lost.detail', id=match.lost_item.id) }}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-eye me-1"></i>查看丢失物品
+            </a>
+            <a href="{{ url_for('found.detail', id=match.found_item.id) }}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-eye me-1"></i>查看拾获物品
+            </a>
+            <form action="{{ url_for('match.confirm_match', id=match.id) }}" method="POST" style="display:inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-success btn-sm">
+                    <i class="bi bi-check-lg me-1"></i>确认匹配
+                </button>
+            </form>
+            <form action="{{ url_for('match.reject_match', id=match.id) }}" method="POST" style="display:inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-x-lg me-1"></i>拒绝
+                </button>
+            </form>
+        </div>
+        {% elif match.status == 'confirmed' %}
+        <div class="match-actions">
+            {% set other_user_id = match.found_item.user_id if match.lost_item.user_id == current_user.id else match.lost_item.user_id %}
+            <a href="{{ url_for('chat.conversation', user_id=other_user_id) }}" class="btn btn-primary btn-sm">
+                <i class="bi bi-chat-dots me-1"></i>联系对方
+            </a>
+            <a href="{{ url_for('lost.detail', id=match.lost_item.id) }}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-eye me-1"></i>查看丢失物品
+            </a>
+            <a href="{{ url_for('found.detail', id=match.found_item.id) }}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-eye me-1"></i>查看拾获物品
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <h4>暂无匹配结果</h4>
+        <p>发布丢失或拾获物品后，系统会自动为您匹配</p>
+        <a href="{{ url_for('lost.create') }}" class="btn btn-primary mt-3">
+            <i class="bi bi-plus-lg me-1"></i>发布寻物启事
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

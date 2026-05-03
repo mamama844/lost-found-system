@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}编辑丢失物品 - 城市失物招领系统{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0" style="color: var(--primary-color);"><i class="bi bi-pencil me-2"></i>编辑丢失物品</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <label class="form-label">物品名称 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="title" value="{{ item.title }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">物品分类</label>
+                            <select class="form-select" name="category_id">
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}" {% if cat.id == item.category_id %}selected{% endif %}>{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">详细描述</label>
+                            <textarea class="form-control" name="description" rows="5">{{ item.description or '' }}</textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">丢失地点</label>
+                                <input type="text" class="form-control" name="location" value="{{ item.location or '' }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">丢失时间</label>
+                                <input type="datetime-local" class="form-control" name="lost_time" value="{% if item.lost_time %}{{ item.lost_time.strftime('%Y-%m-%dT%H:%M') }}{% endif %}">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">联系方式</label>
+                            <input type="text" class="form-control" name="contact_info" value="{{ item.contact_info or '' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">更换图片（最多3张）</label>
+                            <input type="file" class="form-control" name="images" multiple accept="image/*">
+                            {% if image_paths %}
+                            <div class="mt-2 d-flex gap-2">
+                                {% for path in image_paths %}
+                                <img src="/{{ path }}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;">
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-check me-1"></i>保存</button>
+                            <a href="{{ url_for('lost.detail', id=item.id) }}" class="btn btn-outline-primary">取消</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

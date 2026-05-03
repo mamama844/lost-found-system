@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+
+{% block title %}{{ post.title }} - 论坛{% endblock %}
+
+{% block extra_css %}
+<style>
+    .post-detail-header {
+        background: linear-gradient(135deg, rgba(0,212,255,0.15) 0%, rgba(123,44,191,0.15) 100%);
+        padding: 30px 0;
+        margin-bottom: 30px;
+        color: white;
+    }
+    .post-detail-card {
+        background: rgba(10,10,26,0.9);
+        border: 1px solid rgba(0,212,255,0.15);
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 20px;
+    }
+    .post-title-section {
+        border-bottom: 1px solid rgba(0,212,255,0.1);
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+    }
+    .post-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color:#ffffff;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .post-badge { font-size: 0.75rem; padding: 3px 8px; border-radius: 3px; }
+    .badge-pinned { background: #ffc107; color: #000; }
+    .badge-locked { background: #dc3545; color: white; }
+    .post-author { display: flex; align-items: center; gap: 15px; margin-top: 15px; }
+    .author-avatar {
+        width: 50px; height: 50px; border-radius: 50%;
+        background: linear-gradient(135deg, #00d4ff, #7b2cbf);
+        display: flex; align-items: center; justify-content: center;
+        color: white; font-weight: 600; font-size: 1.2rem;
+    }
+    .author-info .name { font-weight: 600; color:#ffffff; }
+    .author-info .meta { font-size: 0.85rem; color:#a0a0b0; }
+    .post-content { font-size: 1.05rem; line-height: 1.8; color: #c0c0d0; }
+    .post-actions {
+        display: flex; gap: 20px; padding-top: 20px;
+        border-top: 1px solid rgba(0,212,255,0.1); margin-top: 20px;
+    }
+    .post-actions span { color:#a0a0b0; cursor: pointer; transition: color 0.3s; }
+    .post-actions span:hover { color: #00d4ff; }
+    .post-actions i { margin-right: 5px; }
+    .reply-item {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(0,212,255,0.08);
+        border-radius: 10px; padding: 20px; margin-bottom: 15px;
+    }
+    .reply-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .reply-author { display: flex; align-items: center; gap: 10px; }
+    .reply-avatar {
+        width: 35px; height: 35px; border-radius: 50%;
+        background: linear-gradient(135deg, #00d4ff, #7b2cbf);
+        display: flex; align-items: center; justify-content: center;
+        color: white; font-weight: 600; font-size: 0.9rem;
+    }
+    .reply-content { color: #c0c0d0; line-height: 1.6; }
+    .reply-time { font-size: 0.8rem; color:#a0a0b0; }
+    .reply-form {
+        background: rgba(10,10,26,0.9);
+        border: 1px solid rgba(0,212,255,0.15);
+        border-radius: 15px; padding: 25px;
+    }
+    .reply-form textarea {
+        border-radius: 10px;
+        border: 1px solid rgba(0,212,255,0.25);
+        background: rgba(255,255,255,0.05);
+        color:#ffffff;
+        resize: none;
+    }
+    .reply-form textarea:focus {
+        border-color: #00d4ff;
+        box-shadow: 0 0 0 0.2rem rgba(0,212,255,0.15);
+        background: rgba(255,255,255,0.08);
+        color:#ffffff;
+    }
+    .btn-reply {
+        background: linear-gradient(135deg, #00d4ff, #7b2cbf);
+        border: none; color: white; padding: 10px 30px; border-radius: 20px;
+    }
+    .btn-reply:hover { color: white; transform: translateY(-2px); }
+    .locked-notice {
+        background: rgba(255,193,7,0.1);
+        border: 1px solid rgba(255,193,7,0.3);
+        border-radius: 10px; padding: 15px; text-align: center; color: #ffc107;
+    }
+    .action-btn {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(0,212,255,0.2);
+        color:#d0d0e0;
+        padding: 6px 16px;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .action-btn:hover { background: rgba(0,212,255,0.15); color: #00d4ff; border-color: rgba(0,212,255,0.4); }
+    .action-btn.active { background: rgba(0,212,255,0.2); color: #00d4ff; border-color: #00d4ff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="post-detail-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <li class="breadcrumb-item"><a href="{{ url_for('forum.index') }}" style="color:rgba(255,255,255,0.5);">论坛</a></li>
+                <li class="breadcrumb-item active" style="color:white;">{{ post.category }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-9">
+            <div class="post-detail-card">
+                <div class="post-title-section">
+                    <h1 class="post-title">
+                        {% if post.is_pinned %}
+                        <span class="post-badge badge-pinned">置顶</span>
+                        {% endif %}
+                        {% if post.is_locked %}
+                        <span class="post-badge badge-locked">锁定</span>
+                        {% endif %}
+                        {{ post.title }}
+                    </h1>
+                    <div class="post-author">
+                        <div class="author-avatar">{{ post.author.username[0]|upper if post.author else '?' }}</div>
+                        <div class="author-info">
+                            <div class="name">{{ post.author.username if post.author else '匿名' }}</div>
+                            <div class="meta">{{ post.category }} · {{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="post-content">{{ post.content | safe }}</div>
+                
+                {% if current_user.is_authenticated %}
+                <div class="post-actions">
+                    <span onclick="toggleLike()"><i class="bi bi-heart"></i> <span id="likeCount">{{ post.like_count }}</span> 点赞</span>
+                    <span onclick="toggleCollect()"><i class="bi bi-bookmark"></i> <span id="collectCount">{{ post.collect_count }}</span> 收藏</span>
+                    {% if post.user_id == current_user.id or current_user.is_admin %}
+                    <a href="{{ url_for('forum.edit', id=post.id) }}" class="action-btn ms-auto" style="text-decoration:none;"><i class="bi bi-pencil"></i> 编辑</a>
+                    <form action="{{ url_for('forum.delete', id=post.id) }}" method="POST" class="d-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="action-btn" style="color:#ff5252;border-color:rgba(255,82,82,0.3);" onclick="return confirm('确定删除？')"><i class="bi bi-trash"></i> 删除</button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="replies-section">
+                <h5 class="mb-3" style="color:#ffffff;"><i class="bi bi-chat-dots me-2" style="color:#00d4ff;"></i>全部回复 ({{ post.replies.count() }})</h5>
+                
+                {% for reply in replies.items %}
+                <div class="reply-item">
+                    <div class="reply-header">
+                        <div class="reply-author">
+                            <div class="reply-avatar">{{ reply.user.username[0]|upper if reply.user else '?' }}</div>
+                            <span class="fw-bold" style="color:#ffffff;">{{ reply.user.username if reply.user else '匿名' }}</span>
+                        </div>
+                        <span class="reply-time">{{ reply.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                    </div>
+                    <div class="reply-content">{{ reply.content }}</div>
+                </div>
+                {% else %}
+                <div class="text-center py-4" style="color:#a0a0b0;">
+                    <i class="bi bi-chat-square fs-1"></i>
+                    <p class="mt-2">暂无回复，快来抢沙发吧！</p>
+                </div>
+                {% endfor %}
+                
+                {% if replies.pages > 1 %}
+                <nav class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if replies.has_prev %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('forum.detail', id=post.id, page=replies.prev_num) }}">上一页</a></li>
+                        {% endif %}
+                        {% for page_num in replies.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                            {% if page_num %}
+                            <li class="page-item {% if page_num == replies.page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('forum.detail', id=post.id, page=page_num) }}">{{ page_num }}</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                            {% endif %}
+                        {% endfor %}
+                        {% if replies.has_next %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('forum.detail', id=post.id, page=replies.next_num) }}">下一页</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+            
+            {% if current_user.is_authenticated %}
+                {% if post.is_locked %}
+                <div class="locked-notice mt-4">
+                    <i class="bi bi-lock me-2"></i>该帖子已被锁定，无法回复
+                </div>
+                {% else %}
+                <div class="reply-form mt-4">
+                    <h5 class="mb-3" style="color:#ffffff;">发表回复</h5>
+                    <form action="{{ url_for('forum.reply', id=post.id) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <textarea name="content" class="form-control" rows="4" placeholder="写下你的回复..." required></textarea>
+                        <button type="submit" class="btn btn-reply mt-3">
+                            <i class="bi bi-send me-1"></i> 发表回复
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            {% else %}
+            <div class="text-center py-4 mt-4" style="background:rgba(10,10,26,0.85);border:1px solid rgba(0,212,255,0.15);border-radius:12px;">
+                <p class="mb-2" style="color:#a0a0b0;">登录后才能回复</p>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary">立即登录</a>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-lg-3">
+            <div class="post-detail-card">
+                <h6 class="mb-3" style="color:#00d4ff;">帖子信息</h6>
+                <ul class="list-unstyled mb-0" style="color:#d0d0e0;">
+                    <li class="mb-2"><i class="bi bi-folder me-2" style="color:#a0a0b0;"></i>{{ post.category }}</li>
+                    <li class="mb-2"><i class="bi bi-calendar me-2" style="color:#a0a0b0;"></i>{{ post.created_at.strftime('%Y-%m-%d') }}</li>
+                    <li><i class="bi bi-eye me-2" style="color:#a0a0b0;"></i>{{ post.views }} 次浏览</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleLike() {
+    fetch('{{ url_for("forum.toggle_like", id=post.id) }}', {
+        method: 'POST', headers: {'X-CSRFToken': csrfToken}
+    }).then(r => r.json()).then(data => {
+        if (data.success) { document.getElementById('likeCount').textContent = data.like_count; }
+    });
+}
+function toggleCollect() {
+    fetch('{{ url_for("forum.toggle_collect", id=post.id) }}', {
+        method: 'POST', headers: {'X-CSRFToken': csrfToken}
+    }).then(r => r.json()).then(data => {
+        if (data.success) { document.getElementById('collectCount').textContent = data.collect_count; }
+    });
+}
+</script>
+{% endblock %}

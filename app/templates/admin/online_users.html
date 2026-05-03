@@ -1,0 +1,60 @@
+{% extends "admin/base.html" %}
+
+{% block title %}在线用户 - 管理后台{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0" style="color:#00d4ff;"><i class="bi bi-people me-2"></i>在线用户</h4>
+        <span class="badge" style="background:linear-gradient(135deg,#00c853,#64dd17);font-size:1rem;padding:8px 16px;">{{ online_users|length }} 人在线</span>
+    </div>
+    
+    <div class="card" style="background:rgba(10,10,26,0.9);border:1px solid rgba(0,212,255,0.15);">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" style="color:#ffffff;">
+                    <thead>
+                        <tr style="border-bottom:1px solid rgba(0,212,255,0.15);">
+                            <th style="color:#a0a0b0;">用户ID</th>
+                            <th style="color:#a0a0b0;">用户名</th>
+                            <th style="color:#a0a0b0;">邮箱</th>
+                            <th style="color:#a0a0b0;">角色</th>
+                            <th style="color:#a0a0b0;">信用分</th>
+                            <th style="color:#a0a0b0;">最后活动时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in online_users %}
+                        <tr style="border-bottom:1px solid rgba(0,212,255,0.08);">
+                            <td>{{ item.user.id }}</td>
+                            <td>
+                                <span style="color:#00d4ff;font-weight:600;">{{ item.user.username }}</span>
+                                <span class="badge ms-1" style="background:#00c853;font-size:0.65rem;">在线</span>
+                            </td>
+                            <td style="color:#d0d0e0;">{{ item.user.email }}</td>
+                            <td>
+                                {% if item.user.is_admin %}
+                                <span class="badge" style="background:linear-gradient(135deg,#ffc107,#ff9800);">管理员</span>
+                                {% else %}
+                                <span class="badge" style="background:rgba(0,212,255,0.15);color:#00d4ff;">用户</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ item.user.credit_score }}</td>
+                            <td style="color:#a0a0b0;font-size:0.85rem;">
+                                {% if item.last_action %}
+                                {{ item.last_action.strftime('%Y-%m-%d %H:%M:%S') }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="6" class="text-center" style="color:#a0a0b0;padding:30px;">暂无在线用户</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

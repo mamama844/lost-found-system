@@ -1,0 +1,108 @@
+{% extends "admin/base.html" %}
+
+{% block title %}系统配置 - 管理后台{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0" style="color:#00d4ff;"><i class="bi bi-gear me-2"></i>系统配置</h4>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card" style="background:rgba(10,10,26,0.9);border:1px solid rgba(0,212,255,0.15);">
+                <div class="card-header" style="background:rgba(10,10,26,0.95);border-bottom:1px solid rgba(0,212,255,0.15);">
+                    <h6 style="color:#00d4ff;margin:0;"><i class="bi bi-building me-2"></i>基本设置</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label style="color:#d0d0e0;">站点名称</label>
+                        <input type="text" id="site_name" class="form-control" value="{{ configs.get('site_name', '城市失物招领智能匹配系统') }}" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.25);color:#ffffff;">
+                    </div>
+                    <div class="mb-3">
+                        <label style="color:#d0d0e0;">站点描述</label>
+                        <textarea id="site_description" class="form-control" rows="2" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.25);color:#ffffff;">{{ configs.get('site_description', '') }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label style="color:#d0d0e0;">联系邮箱</label>
+                        <input type="email" id="contact_email" class="form-control" value="{{ configs.get('contact_email', '') }}" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.25);color:#ffffff;">
+                    </div>
+                    <div class="mb-3">
+                        <label style="color:#d0d0e0;">ICP备案号</label>
+                        <input type="text" id="icp_number" class="form-control" value="{{ configs.get('icp_number', '') }}" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.25);color:#ffffff;">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card" style="background:rgba(10,10,26,0.9);border:1px solid rgba(0,212,255,0.15);">
+                <div class="card-header" style="background:rgba(10,10,26,0.95);border-bottom:1px solid rgba(0,212,255,0.15);">
+                    <h6 style="color:#00d4ff;margin:0;"><i class="bi bi-shield-check me-2"></i>功能设置</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label style="color:#d0d0e0;">注册默认信用分</label>
+                        <input type="number" id="default_credit" class="form-control" value="{{ configs.get('default_credit', '100') }}" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.25);color:#ffffff;">
+                    </div>
+                    <div class="mb-3">
+                        <label style="color:#d0d0e0;">发布最低信用分</label>
+                        <input type="number" id="min_credit_publish" class="form-control" value="{{ configs.get('min_credit_publish', '30') }}" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.25);color:#ffffff;">
+                    </div>
+                    <div class="mb-3">
+                        <label style="color:#d0d0e0;">登录失败锁定次数</label>
+                        <input type="number" id="max_login_attempts" class="form-control" value="{{ configs.get('max_login_attempts', '5') }}" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.25);color:#ffffff;">
+                    </div>
+                    <div class="mb-3">
+                        <label style="color:#d0d0e0;">锁定时长(分钟)</label>
+                        <input type="number" id="lock_duration" class="form-control" value="{{ configs.get('lock_duration', '60') }}" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.25);color:#ffffff;">
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="enable_register" {% if configs.get('enable_register', 'true') == 'true' %}checked{% endif %}>
+                            <label class="form-check-label" style="color:#d0d0e0;">开放注册</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="enable_auto_match" {% if configs.get('enable_auto_match', 'true') == 'true' %}checked{% endif %}>
+                            <label class="form-check-label" style="color:#d0d0e0;">自动匹配</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="text-end">
+        <button class="btn" style="background:linear-gradient(135deg,#00d4ff,#7b2cbf);color:white;padding:10px 30px;" onclick="saveConfig()">
+            <i class="bi bi-check-lg me-1"></i>保存配置
+        </button>
+    </div>
+</div>
+
+<script>
+function saveConfig() {
+    var configs = {
+        site_name: document.getElementById('site_name').value.trim(),
+        site_description: document.getElementById('site_description').value.trim(),
+        contact_email: document.getElementById('contact_email').value.trim(),
+        icp_number: document.getElementById('icp_number').value.trim(),
+        default_credit: document.getElementById('default_credit').value,
+        min_credit_publish: document.getElementById('min_credit_publish').value,
+        max_login_attempts: document.getElementById('max_login_attempts').value,
+        lock_duration: document.getElementById('lock_duration').value,
+        enable_register: document.getElementById('enable_register').checked ? 'true' : 'false',
+        enable_auto_match: document.getElementById('enable_auto_match').checked ? 'true' : 'false'
+    };
+    fetch('/admin/system-config', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+        body: JSON.stringify(configs)
+    }).then(r => r.json()).then(data => {
+        if (data.success) { alert('配置已保存'); }
+        else { alert(data.message || '保存失败'); }
+    }).catch(e => alert('请求失败: ' + e));
+}
+</script>
+{% endblock %}

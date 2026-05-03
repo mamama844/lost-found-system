@@ -1,0 +1,98 @@
+{% extends "admin/base.html" %}
+
+{% block title %}数据备份 - 管理后台{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0" style="color:#00d4ff;"><i class="bi bi-database me-2"></i>数据备份</h4>
+        <button class="btn" style="background:linear-gradient(135deg,#00d4ff,#7b2cbf);color:white;" onclick="createBackup()">
+            <i class="bi bi-plus-lg me-1"></i>创建备份
+        </button>
+    </div>
+    
+    <div class="card" style="background:rgba(10,10,26,0.9);border:1px solid rgba(0,212,255,0.15);">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" style="color:#ffffff;">
+                    <thead>
+                        <tr style="border-bottom:1px solid rgba(0,212,255,0.15);">
+                            <th style="color:#a0a0b0;">ID</th>
+                            <th style="color:#a0a0b0;">文件名</th>
+                            <th style="color:#a0a0b0;">大小</th>
+                            <th style="color:#a0a0b0;">类型</th>
+                            <th style="color:#a0a0b0;">创建时间</th>
+                            <th style="color:#a0a0b0;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for backup in backups %}
+                        <tr style="border-bottom:1px solid rgba(0,212,255,0.08);">
+                            <td>{{ backup.id }}</td>
+                            <td style="color:#00d4ff;">{{ backup.filename }}</td>
+                            <td>
+                                {% if backup.file_size < 1048576 %}
+                                {{ (backup.file_size / 1024)|round(1) }} KB
+                                {% else %}
+                                {{ (backup.file_size / 1048576)|round(1) }} MB
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge" style="background:rgba(0,212,255,0.15);color:#00d4ff;">{{ backup.backup_type }}</span>
+                            </td>
+                            <td style="color:#a0a0b0;font-size:0.85rem;">{{ backup.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                            <td>
+                                <a href="{{ url_for('admin.download_backup', id=backup.id) }}" class="btn btn-sm" style="background:rgba(0,200,83,0.15);color:#00c853;padding:2px 10px;">
+                                    <i class="bi bi-download"></i> 下载
+                                </a>
+                                <button class="btn btn-sm" style="background:rgba(255,193,7,0.15);color:#ffc107;padding:2px 10px;" onclick="restoreBackup({{ backup.id }})">恢复</button>
+                                <button class="btn btn-sm" style="background:rgba(255,82,82,0.15);color:#ff5252;padding:2px 10px;" onclick="deleteBackup({{ backup.id }})">删除</button>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="6" class="text-center" style="color:#a0a0b0;padding:30px;">暂无备份记录</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function createBackup() {
+    fetch('/admin/backup', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+        body: JSON.stringify({action: 'create'})
+    }).then(r => r.json()).then(data => {
+        if (data.success) { alert('备份创建成功: ' + data.filename); location.reload(); }
+        else { alert(data.message || '创建失败'); }
+    }).catch(e => alert('请求失败: ' + e));
+}
+
+function restoreBackup(id) {
+    if (!confirm('确定要恢复此备份吗？当前数据将被覆盖，且需要重启服务器！')) return;
+    fetch('/admin/backup', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+        body: JSON.stringify({action: 'restore', backup_id: id})
+    }).then(r => r.json()).then(data => {
+        if (data.success) { alert(data.message); }
+        else { alert(data.message || '恢复失败'); }
+    }).catch(e => alert('请求失败: ' + e));
+}
+
+function deleteBackup(id) {
+    if (!confirm('确定要删除此备份吗？')) return;
+    fetch('/admin/backup', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+        body: JSON.stringify({action: 'delete', backup_id: id})
+    }).then(r => r.json()).then(data => {
+        if (data.success) { location.reload(); }
+        else { alert(data.message || '删除失败'); }
+    }).catch(e => alert('请求失败: ' + e));
+}
+</script>
+{% endblock %}

@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}与{{ other_user.username }}的对话 - 城市失物招领系统{% endblock %}
+
+{% block extra_css %}
+<style>
+.msg-container {
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 20px;
+    background: rgba(10,10,26,0.9);
+    border: 1px solid rgba(0,212,255,0.15);
+    border-radius: 12px;
+}
+.msg-bubble {
+    max-width: 70%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    margin-bottom: 12px;
+    word-break: break-word;
+}
+.msg-mine {
+    background: linear-gradient(135deg, #00d4ff, #7b2cbf);
+    color: white;
+    margin-left: auto;
+    border-bottom-right-radius: 4px;
+}
+.msg-other {
+    background: rgba(255,255,255,0.08);
+    color: #ffffff;
+    border: 1px solid rgba(0,212,255,0.15);
+    border-bottom-left-radius: 4px;
+}
+.msg-time {
+    font-size: 0.7rem;
+    opacity: 0.7;
+    margin-top: 4px;
+}
+.msg-mine .msg-time { text-align: right; }
+.msg-other .msg-time { text-align: left; }
+.msg-input-area {
+    background: rgba(10,10,26,0.9);
+    border: 1px solid rgba(0,212,255,0.15);
+    border-radius: 12px;
+    padding: 15px;
+    margin-top: 15px;
+}
+.match-tag {
+    background: rgba(0,200,83,0.15);
+    border: 1px solid rgba(0,200,83,0.3);
+    color: #00c853;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.match-tag:hover { background: rgba(0,200,83,0.25); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex align-items-center mb-3">
+        <a href="{{ url_for('chat.chat_list') }}" class="btn me-3" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.2);color:#ffffff;border-radius:8px;">
+            <i class="bi bi-arrow-left me-1"></i>返回
+        </a>
+        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#00d4ff,#7b2cbf);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;margin-right:12px;">
+            {{ other_user.username[0]|upper }}
+        </div>
+        <div>
+            <h5 style="color:#ffffff;margin:0;">{{ other_user.username }}</h5>
+            <small style="color:#a0a0b0;">{{ other_user.email }}</small>
+        </div>
+    </div>
+
+    {% if related_matches %}
+    <div class="mb-3">
+        <small style="color:#a0a0b0;">相关匹配：</small>
+        {% for m in related_matches %}
+        <span class="match-tag" onclick="setMatchId({{ m.id }})">
+            匹配#{{ m.id }} - {{ m.lost_item.title[:15] }} ↔ {{ m.found_item.title[:15] }}
+        </span>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="msg-container" id="msgContainer">
+        {% for msg in messages %}
+        <div class="d-flex {% if msg.sender_id == current_user.id %}justify-content-end{% else %}justify-content-start{% endif %}">
+            <div class="msg-bubble {% if msg.sender_id == current_user.id %}msg-mine{% else %}msg-other{% endif %}">
+                {% if msg.match_id %}
+                <div style="font-size:0.75rem;opacity:0.8;margin-bottom:4px;">
+                    <i class="bi bi-link-45deg me-1"></i>匹配#{{ msg.match_id }}
+                </div>
+                {% endif %}
+                <div>{{ msg.content }}</div>
+                <div class="msg-time">{{ msg.created_at.strftime('%m-%d %H:%M') }}</div>
+            </div>
+        </div>
+        {% endfor %}
+        {% if not messages %}
+        <div class="text-center py-4" style="color:#a0a0b0;">
+            <i class="bi bi-chat-dots" style="font-size:2rem;"></i>
+            <p>开始聊天吧！</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="msg-input-area">
+        <form id="chatForm" onsubmit="return sendMessage(event)">
+            <input type="hidden" id="matchId" name="match_id" value="">
+            <input type="hidden" id="csrfToken" value="{{ csrf_token() }}">
+            <div class="d-flex gap-2">
+                <input type="text" id="msgInput" class="form-control" placeholder="输入消息..." autocomplete="off"
+                    style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.3);color:#ffffff;border-radius:10px;">
+                <button type="submit" class="btn" style="background:linear-gradient(135deg,#00d4ff,#7b2cbf);color:white;border:none;border-radius:10px;padding:0 25px;">
+                    <i class="bi bi-send"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function setMatchId(id) {
+    document.getElementById('matchId').value = id;
+}
+
+function sendMessage(e) {
+    e.preventDefault();
+    var input = document.getElementById('msgInput');
+    var content = input.value.trim();
+    if (!content) return false;
+    
+    var csrf = document.getElementById('csrfToken').value;
+    var matchId = document.getElementById('matchId').value || null;
+    
+    fetch('/chat/send', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrf
+        },
+        body: JSON.stringify({
+            receiver_id: {{ other_user.id }},
+            content: content,
+            match_id: matchId ? parseInt(matchId) : null
+        })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(result) {
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('发送失败：' + result.message);
+        }
+    });
+    return false;
+}
+
+var container = document.getElementById('msgContainer');
+container.scrollTop = container.scrollHeight;
+</script>
+{% endblock %}

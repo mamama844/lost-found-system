@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}发帖 - 论坛{% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-header {
+        background: linear-gradient(135deg, rgba(0,212,255,0.15) 0%, rgba(123,44,191,0.15) 100%);
+        padding: 30px 0; margin-bottom: 30px; color: white;
+    }
+    .create-card {
+        background: rgba(10,10,26,0.9);
+        border: 1px solid rgba(0,212,255,0.15);
+        border-radius: 15px; padding: 30px;
+    }
+    .form-label { font-weight: 600; color:#d0d0e0; }
+    .btn-submit {
+        background: linear-gradient(135deg, #00d4ff, #7b2cbf);
+        border: none; padding: 12px 40px; border-radius: 25px;
+        color: white; font-weight: 600;
+    }
+    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0,212,255,0.3); color: white; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="create-header">
+    <div class="container">
+        <h2><i class="bi bi-pencil-square me-2"></i>发表新帖</h2>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="create-card">
+                <form method="POST" action="{{ url_for('forum.create') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-4">
+                        <label class="form-label">帖子标题</label>
+                        <input type="text" class="form-control" name="title" placeholder="请输入帖子标题" required maxlength="200">
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">帖子分类</label>
+                        <select class="form-select" name="category">
+                            {% for cat in categories %}
+                            <option value="{{ cat }}">{{ cat }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">帖子内容</label>
+                        <textarea class="form-control" name="content" rows="10" placeholder="请输入帖子内容..." required></textarea>
+                    </div>
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn btn-submit"><i class="bi bi-send me-1"></i> 发表帖子</button>
+                        <a href="{{ url_for('forum.index') }}" class="btn" style="background:rgba(255,255,255,0.08);color:#d0d0e0;border:1px solid rgba(0,212,255,0.2);border-radius:25px;padding:12px 30px;">取消</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

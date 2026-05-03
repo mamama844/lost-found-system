@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}管理后台{% endblock %} - 城市失物招领系统</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --admin-primary: #0a0a1a;
+            --admin-secondary: #0d1b2a;
+            --admin-accent: #1b263b;
+            --admin-highlight: #00d4ff;
+            --admin-highlight2: #7b2cbf;
+            --sidebar-width: 260px;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0d1b2a 100%);
+            min-height: 100vh;
+            margin: 0;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, rgba(10, 10, 26, 0.98) 0%, rgba(13, 27, 42, 0.98) 100%);
+            backdrop-filter: blur(20px);
+            padding: 0;
+            z-index: 100;
+            overflow-y: auto;
+            border-right: 1px solid rgba(0, 212, 255, 0.1);
+        }
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+            background: linear-gradient(90deg, rgba(0, 212, 255, 0.1) 0%, transparent 100%);
+        }
+        .sidebar-header h4 {
+            color: white;
+            margin: 0;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+        }
+        .sidebar-header h4 i { color: var(--admin-highlight); }
+        .sidebar-menu { padding: 15px 0; }
+        .sidebar-menu .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 25px;
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        .sidebar-menu .menu-item:hover {
+            background: linear-gradient(90deg, rgba(0, 212, 255, 0.1) 0%, transparent 100%);
+            color: white;
+            border-left-color: var(--admin-highlight);
+        }
+        .sidebar-menu .menu-item.active {
+            background: linear-gradient(90deg, rgba(0, 212, 255, 0.15) 0%, transparent 100%);
+            color: var(--admin-highlight);
+            border-left-color: var(--admin-highlight);
+        }
+        .sidebar-menu .menu-item i { width: 25px; margin-right: 10px; font-size: 1.1rem; }
+        .menu-section {
+            padding: 10px 25px;
+            color: rgba(0, 212, 255, 0.5);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .top-bar {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            padding: 15px 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(0, 212, 255, 0.1);
+        }
+        .top-bar h5 { margin: 0; color: white; font-weight: 500; }
+        .top-bar h5 i { color: var(--admin-highlight); }
+        .top-bar span { color: rgba(255,255,255,0.6); }
+        .table { margin-bottom: 0; color: #ffffff; background-color: transparent !important; }
+        .table > :not(caption) > * > * { background-color: transparent !important; }
+        .table th {
+            background: rgba(0, 212, 255, 0.1) !important;
+            color: var(--admin-highlight);
+            border: none;
+            font-weight: 500;
+            padding: 15px;
+        }
+        .table td {
+            padding: 15px;
+            vertical-align: middle;
+            border-color: rgba(0, 212, 255, 0.05);
+            color: #ffffff;
+        }
+        .table-hover tbody tr:hover { background: rgba(0, 212, 255, 0.05) !important; }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--admin-highlight) 0%, var(--admin-highlight2) 100%);
+            border: none;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--admin-highlight2) 0%, var(--admin-highlight) 100%);
+        }
+        .form-select, .form-control {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid rgba(0, 212, 255, 0.2) !important;
+            color: #ffffff !important;
+        }
+        .form-select:focus, .form-control:focus {
+            background: rgba(255, 255, 255, 0.08) !important;
+            border-color: var(--admin-highlight) !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 0 0.2rem rgba(0, 212, 255, 0.25) !important;
+        }
+        .form-select option { background: #0a0a1a; color: #ffffff; }
+        .form-control::placeholder { color: rgba(255,255,255,0.4); }
+        .badge { font-weight: 500; }
+        .text-muted { color: rgba(255,255,255,0.55) !important; }
+        .alert { backdrop-filter: blur(20px); }
+        hr { border-color: rgba(0, 212, 255, 0.1); }
+        .pagination .page-link {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(0, 212, 255, 0.1);
+            color: white;
+        }
+        .pagination .page-link:hover { background: rgba(0, 212, 255, 0.2); }
+        .pagination .page-item.active .page-link {
+            background: var(--admin-highlight);
+            border-color: var(--admin-highlight);
+        }
+        .card {
+            background: rgba(10,10,26,0.9) !important;
+            border: 1px solid rgba(0,212,255,0.15) !important;
+        }
+        .card-header {
+            background: rgba(10,10,26,0.95) !important;
+            border-bottom: 1px solid rgba(0,212,255,0.15) !important;
+            color: #ffffff;
+        }
+        .card-body { background: transparent !important; color: #ffffff; }
+        .card-footer { background: rgba(10,10,26,0.95) !important; border-top: 1px solid rgba(0,212,255,0.15) !important; color: #ffffff; }
+        .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+        .modal-backdrop { z-index: 1050 !important; }
+        .modal { z-index: 1060 !important; }
+        .modal-content {
+            background: #0a0a1a !important;
+            border: 1px solid rgba(0,212,255,0.2) !important;
+            color: #ffffff !important;
+        }
+        .modal-header { border-bottom: 1px solid rgba(0,212,255,0.15) !important; }
+        .modal-footer { border-top: 1px solid rgba(0,212,255,0.15) !important; }
+        .modal .form-control,
+        .modal .form-select {
+            background: rgba(255,255,255,0.08) !important;
+            border: 1px solid rgba(0,212,255,0.25) !important;
+            color: #ffffff !important;
+            pointer-events: auto !important;
+        }
+        .modal .form-control:focus,
+        .modal .form-select:focus {
+            background: rgba(255,255,255,0.12) !important;
+            border-color: #00d4ff !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 0 0.2rem rgba(0,212,255,0.25) !important;
+        }
+        .modal .form-check-input {
+            background-color: rgba(255,255,255,0.1);
+            border-color: rgba(0,212,255,0.3);
+            pointer-events: auto !important;
+        }
+        .modal .form-check-input:checked {
+            background-color: #00d4ff;
+            border-color: #00d4ff;
+        }
+        .modal .btn { pointer-events: auto !important; }
+        .modal label { color: #d0d0e0 !important; }
+        .form-label { color: #d0d0e0 !important; }
+        .btn-secondary {
+            background: rgba(255,255,255,0.1) !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
+            color: #e0e0e0 !important;
+        }
+        .btn-danger {
+            background: rgba(255,82,82,0.2) !important;
+            border: 1px solid rgba(255,82,82,0.4) !important;
+            color: #ff5252 !important;
+        }
+        .btn-success {
+            background: rgba(0,200,83,0.2) !important;
+            border: 1px solid rgba(0,200,83,0.4) !important;
+            color: #00c853 !important;
+        }
+        .bg-warning { background-color: rgba(255,193,7,0.2) !important; color: #ffc107 !important; }
+        .bg-success { background-color: rgba(0,200,83,0.2) !important; color: #00c853 !important; }
+        .bg-danger { background-color: rgba(255,82,82,0.2) !important; color: #ff5252 !important; }
+        .bg-info { background-color: rgba(0,212,255,0.2) !important; color: #00d4ff !important; }
+        .bg-secondary { background-color: rgba(128,128,144,0.2) !important; color: #808090 !important; }
+        .bg-light { background-color: rgba(10,10,26,0.85) !important; color: #ffffff !important; }
+        .alert-light { background: rgba(10,10,26,0.9) !important; color: #ffffff !important; border-color: rgba(0,212,255,0.15) !important; }
+        .alert-info { background: rgba(0,212,255,0.1) !important; color: #00d4ff !important; border-color: rgba(0,212,255,0.2) !important; }
+        .alert-warning { background: rgba(255,193,7,0.1) !important; color: #ffc107 !important; border-color: rgba(255,193,7,0.2) !important; }
+        .alert-danger { background: rgba(255,82,82,0.1) !important; color: #ff5252 !important; border-color: rgba(255,82,82,0.2) !important; }
+        .alert-success { background: rgba(0,200,83,0.1) !important; color: #00c853 !important; border-color: rgba(0,200,83,0.2) !important; }
+        .alert-primary { background: rgba(0,212,255,0.1) !important; color: #00d4ff !important; border-color: rgba(0,212,255,0.2) !important; }
+        .alert-secondary { background: rgba(128,128,144,0.1) !important; color: #d0d0e0 !important; border-color: rgba(128,128,144,0.2) !important; }
+        .alert-dark { background: rgba(10,10,26,0.9) !important; color: #ffffff !important; border-color: rgba(0,212,255,0.15) !important; }
+        .input-group-text { background: rgba(255,255,255,0.05) !important; border-color: rgba(0,212,255,0.2) !important; color: #ffffff !important; }
+        .form-text { color: #a0a0b0 !important; }
+        .list-group-item { background: rgba(10,10,26,0.9) !important; border-color: rgba(0,212,255,0.1) !important; color: #ffffff !important; }
+        code { background: rgba(255,255,255,0.1) !important; color: #00d4ff !important; }
+        pre { background: rgba(10,10,26,0.9) !important; color: #ffffff !important; }
+        .text-dark { color: #ffffff !important; }
+        .text-black-50 { color: rgba(255,255,255,0.5) !important; }
+        .btn-outline-dark { color: #ffffff !important; border-color: rgba(255,255,255,0.2) !important; }
+        .btn-outline-dark:hover { background: rgba(255,255,255,0.1) !important; color: #ffffff !important; }
+        .dropdown-menu { background: rgba(10,10,26,0.95) !important; border: 1px solid rgba(0,212,255,0.15) !important; }
+        .dropdown-item { color: #ffffff !important; }
+        .dropdown-item:hover { background: rgba(0,212,255,0.1) !important; color: #00d4ff !important; }
+        .nav-tabs { border-bottom-color: rgba(0,212,255,0.15) !important; }
+        .nav-tabs .nav-link { color: #a0a0b0 !important; border-color: transparent !important; }
+        .nav-tabs .nav-link.active { background: rgba(0,212,255,0.1) !important; border-color: rgba(0,212,255,0.2) !important; color: #00d4ff !important; }
+        .breadcrumb { background: transparent !important; }
+        .progress { background: rgba(255,255,255,0.05) !important; }
+        .form-check-label { color: #d0d0e0 !important; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h4><i class="bi bi-shield-lock"></i> 管理后台</h4>
+        </div>
+        <div class="sidebar-menu">
+            <a href="{{ url_for('admin.dashboard') }}" class="menu-item {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                <i class="bi bi-speedometer2"></i> 数据概览
+            </a>
+            <div class="menu-section">用户与内容</div>
+            <a href="{{ url_for('admin.users') }}" class="menu-item {% if request.endpoint == 'admin.users' %}active{% endif %}">
+                <i class="bi bi-people"></i> 用户管理
+            </a>
+            <a href="{{ url_for('admin.items') }}" class="menu-item {% if request.endpoint == 'admin.items' %}active{% endif %}">
+                <i class="bi bi-box-seam"></i> 物品管理
+            </a>
+            <a href="{{ url_for('admin.categories') }}" class="menu-item {% if request.endpoint == 'admin.categories' %}active{% endif %}">
+                <i class="bi bi-tags"></i> 分类管理
+            </a>
+            <div class="menu-section">智能匹配</div>
+            <a href="{{ url_for('admin.matches') }}" class="menu-item {% if request.endpoint == 'admin.matches' %}active{% endif %}">
+                <i class="bi bi-diagram-3"></i> 匹配记录
+            </a>
+            <a href="{{ url_for('admin.match_config') }}" class="menu-item {% if request.endpoint == 'admin.match_config' %}active{% endif %}">
+                <i class="bi bi-sliders"></i> 匹配配置
+            </a>
+            <div class="menu-section">审核管理</div>
+            <a href="{{ url_for('admin.reports') }}" class="menu-item {% if request.endpoint == 'admin.reports' %}active{% endif %}">
+                <i class="bi bi-flag"></i> 举报审核
+            </a>
+            <a href="{{ url_for('admin.comments') }}" class="menu-item {% if request.endpoint == 'admin.comments' %}active{% endif %}">
+                <i class="bi bi-chat-dots"></i> 评论管理
+            </a>
+            <a href="{{ url_for('admin.forum') }}" class="menu-item {% if request.endpoint == 'admin.forum' %}active{% endif %}">
+                <i class="bi bi-chat-square-text"></i> 论坛管理
+            </a>
+            <a href="{{ url_for('admin.forum_boards') }}" class="menu-item {% if request.endpoint == 'admin.forum_boards' %}active{% endif %}">
+                <i class="bi bi-collection"></i> 板块管理
+            </a>
+            <div class="menu-section">系统运维</div>
+            <a href="{{ url_for('admin.statistics') }}" class="menu-item {% if request.endpoint == 'admin.statistics' %}active{% endif %}">
+                <i class="bi bi-bar-chart"></i> 数据统计
+            </a>
+            <a href="{{ url_for('admin.online_users') }}" class="menu-item {% if request.endpoint == 'admin.online_users' %}active{% endif %}">
+                <i class="bi bi-broadcast"></i> 在线用户
+            </a>
+            <a href="{{ url_for('admin.logs') }}" class="menu-item {% if request.endpoint == 'admin.logs' %}active{% endif %}">
+                <i class="bi bi-clock-history"></i> 操作日志
+            </a>
+            <a href="{{ url_for('admin.system_config') }}" class="menu-item {% if request.endpoint == 'admin.system_config' %}active{% endif %}">
+                <i class="bi bi-gear"></i> 系统配置
+            </a>
+            <a href="{{ url_for('admin.backup') }}" class="menu-item {% if request.endpoint == 'admin.backup' %}active{% endif %}">
+                <i class="bi bi-database"></i> 数据库备份
+            </a>
+            <a href="{{ url_for('admin.notifications') }}" class="menu-item {% if request.endpoint == 'admin.notifications' %}active{% endif %}">
+                <i class="bi bi-bell"></i> 通知管理
+            </a>
+            <hr style="margin: 15px 20px;">
+            <a href="{{ url_for('main.index') }}" class="menu-item">
+                <i class="bi bi-house"></i> 返回前台
+            </a>
+            <a href="{{ url_for('admin.admin_logout') }}" class="menu-item">
+                <i class="bi bi-box-arrow-right"></i> 退出登录
+            </a>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </div>
+    
+    <script src="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+    var csrfToken = '{{ csrf_token() }}';
+    function getCsrfHeaders() {
+        return {'X-CSRFToken': csrfToken};
+    }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

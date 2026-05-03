@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}消息通知 - 城市失物招领系统{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title" style="color: var(--primary-color);">消息中心</h5>
+                    <hr style="border-color: var(--border-color);">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('main.profile') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-person me-2"></i>个人中心
+                        </a>
+                        <a href="{{ url_for('auth.edit_profile') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-gear me-2"></i>修改信息
+                        </a>
+                        <a href="{{ url_for('auth.change_password') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-key me-2"></i>修改密码
+                        </a>
+                        <a href="{{ url_for('auth.credit_records') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-star me-2"></i>信用记录
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0" style="color: var(--primary-color);">
+                        <i class="bi bi-bell me-2"></i>消息通知
+                        {% if unread_count > 0 %}
+                        <span class="badge bg-danger">{{ unread_count }}</span>
+                        {% endif %}
+                    </h5>
+                    {% if unread_count > 0 %}
+                    <button class="btn btn-sm btn-outline-primary" onclick="markAllRead()">
+                        <i class="bi bi-check-all me-1"></i>全部已读
+                    </button>
+                    {% endif %}
+                </div>
+                <div class="card-body p-0">
+                    {% if notifications.items %}
+                    <div class="list-group list-group-flush">
+                        {% for notification in notifications.items %}
+                        <div class="list-group-item {% if not notification.is_read %}list-group-item-info{% endif %}" 
+                             id="notification-{{ notification.id }}" 
+                             style="cursor: pointer; background: {% if not notification.is_read %}rgba(0,212,255,0.05){% else %}transparent{% endif %}; border-color: var(--border-color);"
+                             onclick="showDetail({{ notification.id }})">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center mb-1">
+                                        {% if notification.notification_type == 'match' %}
+                                        <span class="badge bg-success me-2">匹配</span>
+                                        {% elif notification.notification_type == 'reply' %}
+                                        <span class="badge bg-primary me-2">回复</span>
+                                        {% elif notification.notification_type == 'like' %}
+                                        <span class="badge bg-danger me-2">点赞</span>
+                                        {% elif notification.notification_type == 'audit' %}
+                                        <span class="badge bg-warning me-2">审核</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary me-2">系统</span>
+                                        {% endif %}
+                                        <strong style="color: white;">{{ notification.title }}</strong>
+                                        {% if not notification.is_read %}
+                                        <span class="badge bg-danger ms-2">新</span>
+                                        {% endif %}
+                                    </div>
+                                    <p class="mb-1 text-muted small">{{ notification.content[:80] }}{% if notification.content|length > 80 %}...{% endif %}</p>
+                                    <small class="text-muted">{{ notification.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    {% if not notification.is_read %}
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="event.stopPropagation(); markRead({{ notification.id }})">
+                                        标记已读
+                                    </button>
+                                    {% endif %}
+                                    <i class="bi bi-chevron-right text-muted"></i>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-bell-slash display-4 text-muted"></i>
+                        <p class="text-muted mt-3">暂无消息通知</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if notifications.pages > 1 %}
+                <div class="card-footer">
+                    <nav>
+                        <ul class="pagination justify-content-center mb-0">
+                            {% if notifications.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('auth.notifications', page=notifications.prev_num) }}">上一页</a>
+                            </li>
+                            {% endif %}
+                            {% for page_num in notifications.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                                {% if page_num %}
+                                <li class="page-item {% if page_num == notifications.page %}active{% endif %}">
+                                    <a class="page-link" href="{{ url_for('auth.notifications', page=page_num) }}">{{ page_num }}</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                                {% endif %}
+                            {% endfor %}
+                            {% if notifications.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('auth.notifications', page=notifications.next_num) }}">下一页</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="notificationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background: rgba(10,10,26,0.95); border: 1px solid var(--border-color);">
+            <div class="modal-header" style="border-color: var(--border-color);">
+                <h5 class="modal-title" id="modalTitle" style="color: var(--primary-color);"></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalBody" style="color: white;">
+            </div>
+            <div class="modal-footer" style="border-color: var(--border-color);">
+                <small class="text-muted me-auto" id="modalTime"></small>
+                <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var notificationData = {
+    {% for notification in notifications.items %}
+    {{ notification.id }}: {
+        title: "{{ notification.title|e }}",
+        content: "{{ notification.content|e|replace('\n', '\\n') }}",
+        type: "{{ notification.notification_type }}",
+        time: "{{ notification.created_at.strftime('%Y-%m-%d %H:%M') }}",
+        isRead: {{ 'true' if notification.is_read else 'false' }},
+        relatedId: {{ notification.related_id or 'null' }}
+    },
+    {% endfor %}
+};
+
+function showDetail(id) {
+    var data = notificationData[id];
+    if (!data) return;
+    
+    document.getElementById('modalTitle').textContent = data.title;
+    document.getElementById('modalBody').innerHTML = '<p>' + data.content.replace(/\n/g, '<br>') + '</p>';
+    document.getElementById('modalTime').textContent = data.time;
+    
+    var modal = new bootstrap.Modal(document.getElementById('notificationModal'));
+    modal.show();
+    
+    if (!data.isRead) {
+        markRead(id);
+    }
+}
+
+function markRead(id) {
+    fetch('/notification/' + id + '/read', {
+        method: 'POST',
+        headers: getCsrfHeaders()
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        if (data.success) {
+            var el = document.getElementById('notification-' + id);
+            if (el) {
+                el.classList.remove('list-group-item-info');
+                el.style.background = 'transparent';
+                var badge = el.querySelector('.badge.bg-danger.ms-2');
+                if (badge) badge.remove();
+                var btn = el.querySelector('.btn-outline-secondary');
+                if (btn) btn.remove();
+            }
+        }
+    });
+}
+
+function markAllRead() {
+    fetch('/notifications/read-all', {
+        method: 'POST',
+        headers: getCsrfHeaders()
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+</script>
+{% endblock %}

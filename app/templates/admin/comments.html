@@ -1,0 +1,96 @@
+{% extends "admin/base.html" %}
+
+{% block title %}评论管理{% endblock %}
+
+{% block content %}
+<div class="top-bar">
+    <h5><i class="bi bi-chat-dots me-2"></i>评论管理</h5>
+    <span>共 {{ comments.total }} 条评论</span>
+</div>
+
+<div class="content-card">
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>用户</th>
+                    <th>评论内容</th>
+                    <th>关联物品</th>
+                    <th>时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for comment in comments.items %}
+                <tr>
+                    <td>{{ comment.id }}</td>
+                    <td>
+                        {% if comment.user %}
+                        {{ comment.user.username }}
+                        {% else %}
+                        <span class="text-muted">已删除</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ comment.content[:50] }}{% if comment.content|length > 50 %}...{% endif %}</td>
+                    <td>
+                        <span class="badge bg-{% if comment.item_type == 'lost' %}danger{% else %}success{% endif %}">
+                            {% if comment.item_type == 'lost' %}丢失{% else %}拾获{% endif %}
+                        </span>
+                    </td>
+                    <td>{{ comment.created_at.strftime('%Y-%m-%d %H:%M') if comment.created_at else '-' }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-danger btn-action" onclick="deleteComment({{ comment.id }})">
+                            <i class="bi bi-trash"></i> 删除
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">暂无评论</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% if comments.pages > 1 %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if comments.has_prev %}
+            <li class="page-item"><a class="page-link" href="{{ url_for('admin.comments', page=comments.prev_num) }}">上一页</a></li>
+            {% endif %}
+            {% for page_num in comments.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page_num %}
+                <li class="page-item {% if page_num == comments.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.comments', page=page_num) }}">{{ page_num }}</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+            {% if comments.has_next %}
+            <li class="page-item"><a class="page-link" href="{{ url_for('admin.comments', page=comments.next_num) }}">下一页</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function deleteComment(id) {
+    if (!confirm('确定要删除这条评论吗？')) return;
+    fetch('/admin/comment/' + id + '/delete', {
+        method: 'POST',
+        headers: Object.assign({'Content-Type': 'application/json'}, getCsrfHeaders())
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+        if (data.success) { alert(data.message); location.reload(); }
+        else { alert(data.message); }
+    });
+}
+</script>
+{% endblock %}

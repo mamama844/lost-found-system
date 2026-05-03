@@ -1,0 +1,154 @@
+{% extends "admin/base.html" %}
+
+{% block title %}论坛管理{% endblock %}
+
+{% block content %}
+<div class="top-bar">
+    <h5><i class="bi bi-chat-square-text me-2"></i>论坛管理</h5>
+    <span>共 {{ posts.total }} 个帖子</span>
+</div>
+
+<div class="content-card">
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>标题</th>
+                    <th>作者</th>
+                    <th>分类</th>
+                    <th>浏览/点赞</th>
+                    <th>状态</th>
+                    <th>时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for post in posts.items %}
+                <tr>
+                    <td>{{ post.id }}</td>
+                    <td>
+                        {{ post.title[:25] }}{% if post.title|length > 25 %}...{% endif %}
+                        {% if post.is_pinned %}
+                        <span class="badge bg-danger ms-1">置顶</span>
+                        {% endif %}
+                        {% if post.is_locked %}
+                        <span class="badge bg-secondary ms-1">锁定</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if post.author %}
+                        {{ post.author.username }}
+                        {% else %}
+                        <span class="text-muted">已删除</span>
+                        {% endif %}
+                    </td>
+                    <td><span class="badge bg-info">{{ post.category }}</span></td>
+                    <td>{{ post.views }} / {{ post.like_count }}</td>
+                    <td>
+                        {% if post.status == 'active' %}
+                        <span class="badge bg-success">正常</span>
+                        {% else %}
+                        <span class="badge bg-secondary">已删除</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ post.created_at.strftime('%Y-%m-%d') if post.created_at else '-' }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary btn-action" onclick="togglePin({{ post.id }})" title="{% if post.is_pinned %}取消置顶{% else %}置顶{% endif %}">
+                            <i class="bi bi-pin{% if post.is_pinned %}-fill{% endif %}"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning btn-action" onclick="toggleLock({{ post.id }})" title="{% if post.is_locked %}解锁{% else %}锁定{% endif %}">
+                            <i class="bi bi-lock{% if post.is_locked %}-fill{% endif %}"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger btn-action" onclick="deletePost({{ post.id }})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-4">暂无帖子</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% if posts.pages > 1 %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if posts.has_prev %}
+            <li class="page-item"><a class="page-link" href="{{ url_for('admin.forum', page=posts.prev_num) }}">上一页</a></li>
+            {% endif %}
+            {% for page_num in posts.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page_num %}
+                <li class="page-item {% if page_num == posts.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.forum', page=page_num) }}">{{ page_num }}</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+            {% if posts.has_next %}
+            <li class="page-item"><a class="page-link" href="{{ url_for('admin.forum', page=posts.next_num) }}">下一页</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function togglePin(id) {
+    fetch('/admin/forum/' + id + '/toggle_pin', {
+        method: 'POST',
+        headers: Object.assign({'Content-Type': 'application/json'}, getCsrfHeaders())
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+        if (data.success) { location.reload(); }
+        else { alert(data.message); }
+    });
+}
+
+function toggleLock(id) {
+    fetch('/admin/forum/' + id + '/toggle_lock', {
+        method: 'POST',
+        headers: Object.assign({'Content-Type': 'application/json'}, getCsrfHeaders())
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+        if (data.success) { location.reload(); }
+        else { alert(data.message); }
+    });
+}
+
+function deletePost(id) {
+    if (!confirm('确定要删除这个帖子吗？')) return;
+    fetch('/admin/forum/' + id + '/delete', {
+        method: 'POST',
+        headers: Object.assign({'Content-Type': 'application/json'}, getCsrfHeaders())
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+        if (data.success) { alert(data.message); location.reload(); }
+        else { alert(data.message); }
+    });
+}
+
+function auditPost(id, action) {
+    var reason = action === 'reject' ? prompt('请输入拒绝原因：') || '' : '';
+    fetch('/admin/forum/' + id + '/audit', {
+        method: 'POST',
+        headers: Object.assign({'Content-Type': 'application/json'}, getCsrfHeaders()),
+        body: JSON.stringify({ action: action, reason: reason })
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+        if (data.success) { alert(data.message); location.reload(); }
+        else { alert(data.message); }
+    });
+}
+</script>
+{% endblock %}

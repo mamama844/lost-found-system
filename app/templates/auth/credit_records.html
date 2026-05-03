@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}信用记录 - 城市失物招领系统{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title" style="color: var(--primary-color);">消息中心</h5>
+                    <hr style="border-color: var(--border-color);">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('main.profile') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-person me-2"></i>个人中心
+                        </a>
+                        <a href="{{ url_for('auth.edit_profile') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-gear me-2"></i>修改信息
+                        </a>
+                        <a href="{{ url_for('auth.change_password') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-key me-2"></i>修改密码
+                        </a>
+                        <a href="{{ url_for('auth.notifications') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-bell me-2"></i>消息通知
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="card mt-3">
+                <div class="card-body text-center">
+                    <h6 style="color: var(--primary-color);">当前信用分</h6>
+                    <div style="font-size: 3rem; font-weight: 700; color: {% if current_user.credit_score >= 60 %}#00c853{% else %}#ff5252{% endif %};">
+                        {{ current_user.credit_score }}
+                    </div>
+                    <small class="text-muted">
+                        {% if current_user.credit_score >= 80 %}信用良好
+                        {% elif current_user.credit_score >= 60 %}信用正常
+                        {% elif current_user.credit_score >= 30 %}信用较低，部分功能受限
+                        {% else %}信用极低，发布功能已限制{% endif %}
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0" style="color: var(--primary-color);">
+                        <i class="bi bi-star me-2"></i>信用评分记录
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if records.items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>时间</th>
+                                    <th>变化</th>
+                                    <th>原因</th>
+                                    <th>分数</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in records.items %}
+                                <tr>
+                                    <td>{{ record.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        {% if record.change > 0 %}
+                                        <span class="text-success">+{{ record.change }}</span>
+                                        {% else %}
+                                        <span class="text-danger">{{ record.change }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ record.reason or '系统调整' }}</td>
+                                    <td>{{ record.old_score }} → {{ record.new_score }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-star display-4 text-muted"></i>
+                        <p class="text-muted mt-3">暂无信用记录</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if records.pages > 1 %}
+                <div class="card-footer">
+                    <nav>
+                        <ul class="pagination justify-content-center mb-0">
+                            {% if records.has_prev %}
+                            <li class="page-item"><a class="page-link" href="{{ url_for('auth.credit_records', page=records.prev_num) }}">上一页</a></li>
+                            {% endif %}
+                            {% for page_num in records.iter_pages() %}
+                            {% if page_num %}
+                            <li class="page-item {% if page_num == records.page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('auth.credit_records', page=page_num) }}">{{ page_num }}</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                            {% endif %}
+                            {% endfor %}
+                            {% if records.has_next %}
+                            <li class="page-item"><a class="page-link" href="{{ url_for('auth.credit_records', page=records.next_num) }}">下一页</a></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

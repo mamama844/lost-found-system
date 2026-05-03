@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}用户中心{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h3 style="color:#00d4ff;"><i class="bi bi-speedometer2 me-2"></i>用户中心</h3>
+    <div class="row mt-4">
+        <div class="col-md-3 mb-3">
+            <div class="card text-center p-3" style="background:rgba(10,10,26,0.9);border:1px solid rgba(0,212,255,0.2);border-radius:12px;">
+                <i class="bi bi-search" style="font-size:2rem;color:#ffc107;"></i>
+                <h5 class="mt-2" style="color:#ffffff;">我的寻物</h5>
+                <h3 style="color:#00d4ff;">{{ my_lost_count|default(0) }}</h3>
+                <a href="{{ url_for('lost.list_items') }}" class="btn btn-sm mt-2" style="background:rgba(0,212,255,0.15);border:1px solid rgba(0,212,255,0.3);color:#00d4ff;border-radius:6px;">查看</a>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center p-3" style="background:rgba(10,10,26,0.9);border:1px solid rgba(0,212,255,0.2);border-radius:12px;">
+                <i class="bi bi-hand-index" style="font-size:2rem;color:#28a745;"></i>
+                <h5 class="mt-2" style="color:#ffffff;">我的招领</h5>
+                <h3 style="color:#00d4ff;">{{ my_found_count|default(0) }}</h3>
+                <a href="{{ url_for('found.list_items') }}" class="btn btn-sm mt-2" style="background:rgba(0,212,255,0.15);border:1px solid rgba(0,212,255,0.3);color:#00d4ff;border-radius:6px;">查看</a>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center p-3" style="background:rgba(10,10,26,0.9);border:1px solid rgba(0,212,255,0.2);border-radius:12px;">
+                <i class="bi bi-diagram-3" style="font-size:2rem;color:#00d4ff;"></i>
+                <h5 class="mt-2" style="color:#ffffff;">匹配记录</h5>
+                <h3 style="color:#00d4ff;">{{ my_match_count|default(0) }}</h3>
+                <a href="{{ url_for('match.list_matches') }}" class="btn btn-sm mt-2" style="background:rgba(0,212,255,0.15);border:1px solid rgba(0,212,255,0.3);color:#00d4ff;border-radius:6px;">查看</a>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center p-3" style="background:rgba(10,10,26,0.9);border:1px solid rgba(0,212,255,0.2);border-radius:12px;">
+                <i class="bi bi-star" style="font-size:2rem;color:#ffc107;"></i>
+                <h5 class="mt-2" style="color:#ffffff;">信用评分</h5>
+                <h3 style="color:#00d4ff;">{{ current_user.credit_score }}</h3>
+                <a href="{{ url_for('auth.credit_records') }}" class="btn btn-sm mt-2" style="background:rgba(0,212,255,0.15);border:1px solid rgba(0,212,255,0.3);color:#00d4ff;border-radius:6px;">查看</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <div class="col-md-6">
+            <div class="card" style="background:rgba(10,10,26,0.9);border:1px solid rgba(0,212,255,0.2);border-radius:12px;">
+                <div class="card-body p-4">
+                    <h5 style="color:#00d4ff;"><i class="bi bi-bell me-2"></i>最新消息</h5>
+                    {% for notification in notifications|default([]) %}
+                    <div class="mb-2 p-2" style="background:rgba(255,255,255,0.03);border-radius:6px;border:1px solid rgba(0,212,255,0.1);">
+                        <small style="color:#a0a0b0;">{{ notification.created_at.strftime('%m-%d %H:%M') }}</small>
+                        <p class="mb-0" style="color:#ffffff;">{{ notification.content[:50] }}</p>
+                    </div>
+                    {% else %}
+                    <p style="color:#a0a0b0;">暂无消息</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card" style="background:rgba(10,10,26,0.9);border:1px solid rgba(0,212,255,0.2);border-radius:12px;">
+                <div class="card-body p-4">
+                    <h5 style="color:#00d4ff;"><i class="bi bi-lightning me-2"></i>快捷操作</h5>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('lost.create') }}" class="btn" style="background:rgba(255,193,7,0.15);border:1px solid rgba(255,193,7,0.3);color:#ffc107;border-radius:8px;text-align:left;">
+                            <i class="bi bi-plus-circle me-2"></i>发布寻物启事
+                        </a>
+                        <a href="{{ url_for('found.create') }}" class="btn" style="background:rgba(40,167,69,0.15);border:1px solid rgba(40,167,69,0.3);color:#28a745;border-radius:8px;text-align:left;">
+                            <i class="bi bi-plus-circle me-2"></i>发布失物招领
+                        </a>
+                        <a href="{{ url_for('forum.create') }}" class="btn" style="background:rgba(0,212,255,0.15);border:1px solid rgba(0,212,255,0.3);color:#00d4ff;border-radius:8px;text-align:left;">
+                            <i class="bi bi-chat-dots me-2"></i>发帖交流
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

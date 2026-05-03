@@ -1,0 +1,143 @@
+{% extends "admin/base.html" %}
+
+{% block title %}通知管理 - 管理后台{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0" style="color:#00d4ff;"><i class="bi bi-bell me-2"></i>通知管理</h4>
+        <button class="btn" style="background:linear-gradient(135deg,#00d4ff,#7b2cbf);color:white;" data-bs-toggle="modal" data-bs-target="#sendModal">
+            <i class="bi bi-send me-1"></i>发送通知
+        </button>
+    </div>
+    
+    <div class="card" style="background:rgba(10,10,26,0.9);border:1px solid rgba(0,212,255,0.15);">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" style="color:#ffffff;">
+                    <thead>
+                        <tr style="border-bottom:1px solid rgba(0,212,255,0.15);">
+                            <th style="color:#a0a0b0;">ID</th>
+                            <th style="color:#a0a0b0;">接收用户</th>
+                            <th style="color:#a0a0b0;">标题</th>
+                            <th style="color:#a0a0b0;">类型</th>
+                            <th style="color:#a0a0b0;">已读</th>
+                            <th style="color:#a0a0b0;">发送时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for notif in notifications.items %}
+                        <tr style="border-bottom:1px solid rgba(0,212,255,0.08);">
+                            <td>{{ notif.id }}</td>
+                            <td>
+                                {% if notif.user %}
+                                {{ notif.user.username }}
+                                {% else %}
+                                <span style="color:#a0a0b0;">已删除</span>
+                                {% endif %}
+                            </td>
+                            <td style="color:#ffffff;">{{ notif.title }}</td>
+                            <td>
+                                <span class="badge" style="background:rgba(0,212,255,0.15);color:#00d4ff;">{{ notif.notification_type }}</span>
+                            </td>
+                            <td>
+                                {% if notif.is_read %}
+                                <span style="color:#00c853;">已读</span>
+                                {% else %}
+                                <span style="color:#ff5252;">未读</span>
+                                {% endif %}
+                            </td>
+                            <td style="color:#a0a0b0;font-size:0.85rem;">{{ notif.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="6" class="text-center" style="color:#a0a0b0;padding:30px;">暂无通知</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if notifications.pages > 1 %}
+            <nav>
+                <ul class="pagination justify-content-center">
+                    {% if notifications.has_prev %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('admin.notifications', page=notifications.prev_num) }}" style="background:rgba(10,10,26,0.9);color:#00d4ff;border-color:rgba(0,212,255,0.15);">上一页</a></li>
+                    {% endif %}
+                    {% for page_num in notifications.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                        {% if page_num %}
+                        <li class="page-item {% if page_num == notifications.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('admin.notifications', page=page_num) }}" style="background:rgba(10,10,26,0.9);color:#00d4ff;border-color:rgba(0,212,255,0.15);">{{ page_num }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled"><span class="page-link" style="background:rgba(10,10,26,0.9);color:#a0a0b0;border-color:rgba(0,212,255,0.15);">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if notifications.has_next %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('admin.notifications', page=notifications.next_num) }}" style="background:rgba(10,10,26,0.9);color:#00d4ff;border-color:rgba(0,212,255,0.15);">下一页</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="sendModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background:#0a0a1a;border:1px solid rgba(0,212,255,0.2);">
+            <div class="modal-header" style="border-bottom:1px solid rgba(0,212,255,0.15);">
+                <h5 class="modal-title" style="color:#ffffff;">发送通知</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label style="color:#d0d0e0;">接收用户 *</label>
+                    <select id="sendUserId" class="form-select" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.25);color:#ffffff;">
+                        <option value="all">全部用户</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label style="color:#d0d0e0;">通知标题 *</label>
+                    <input type="text" id="sendTitle" class="form-control" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.25);color:#ffffff;">
+                </div>
+                <div class="mb-3">
+                    <label style="color:#d0d0e0;">通知内容</label>
+                    <textarea id="sendContent" class="form-control" rows="3" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.25);color:#ffffff;"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label style="color:#d0d0e0;">通知类型</label>
+                    <select id="sendType" class="form-select" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.25);color:#ffffff;">
+                        <option value="system">系统通知</option>
+                        <option value="audit">审核通知</option>
+                        <option value="match">匹配通知</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid rgba(0,212,255,0.15);">
+                <button type="button" class="btn" style="background:rgba(255,255,255,0.1);color:#d0d0e0;" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn" style="background:linear-gradient(135deg,#00d4ff,#7b2cbf);color:white;" onclick="sendNotification()">发送</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function sendNotification() {
+    var title = document.getElementById('sendTitle').value.trim();
+    if (!title) { alert('请输入通知标题'); return; }
+    fetch('/admin/notification/send', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+        body: JSON.stringify({
+            user_id: document.getElementById('sendUserId').value,
+            title: title,
+            content: document.getElementById('sendContent').value.trim(),
+            type: document.getElementById('sendType').value
+        })
+    }).then(r => r.json()).then(data => {
+        if (data.success) { alert('通知发送成功'); location.reload(); }
+        else { alert(data.message || '发送失败'); }
+    }).catch(e => alert('请求失败: ' + e));
+}
+</script>
+{% endblock %}

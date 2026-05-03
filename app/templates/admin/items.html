@@ -1,0 +1,232 @@
+{% extends "admin/base.html" %}
+
+{% block title %}物品管理 - 管理后台{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0" style="color:#00d4ff;"><i class="bi bi-box me-2"></i>物品管理</h4>
+    </div>
+    
+    <div class="card" style="background:rgba(10,10,26,0.9);border:1px solid rgba(0,212,255,0.15);">
+        <div class="card-header" style="background:rgba(10,10,26,0.95);border-bottom:1px solid rgba(0,212,255,0.15);">
+            <form method="GET" class="row g-2 align-items-center">
+                <div class="col-auto">
+                    <select name="type" class="form-select" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.25);color:#ffffff;">
+                        <option value="all" {% if item_type == 'all' %}selected{% endif %}>全部类型</option>
+                        <option value="lost" {% if item_type == 'lost' %}selected{% endif %}>寻物启事</option>
+                        <option value="found" {% if item_type == 'found' %}selected{% endif %}>失物招领</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <select name="audit" class="form-select" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.25);color:#ffffff;">
+                        <option value="all" {% if audit_status == 'all' %}selected{% endif %}>全部状态</option>
+                        <option value="pending" {% if audit_status == 'pending' %}selected{% endif %}>待审核</option>
+                        <option value="approved" {% if audit_status == 'approved' %}selected{% endif %}>已通过</option>
+                        <option value="rejected" {% if audit_status == 'rejected' %}selected{% endif %}>已拒绝</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn" style="background:linear-gradient(135deg,#00d4ff,#7b2cbf);color:white;">筛选</button>
+                    <a href="{{ url_for('admin.items') }}" class="btn" style="background:rgba(255,255,255,0.08);color:#d0d0e0;border:1px solid rgba(0,212,255,0.2);">重置</a>
+                </div>
+            </form>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" style="color:#ffffff;">
+                    <thead>
+                        <tr style="border-bottom:1px solid rgba(0,212,255,0.15);">
+                            <th style="color:#a0a0b0;">ID</th>
+                            <th style="color:#a0a0b0;">类型</th>
+                            <th style="color:#a0a0b0;">标题</th>
+                            <th style="color:#a0a0b0;">发布者</th>
+                            <th style="color:#a0a0b0;">位置</th>
+                            <th style="color:#a0a0b0;">审核状态</th>
+                            <th style="color:#a0a0b0;">物品状态</th>
+                            <th style="color:#a0a0b0;">发布时间</th>
+                            <th style="color:#a0a0b0;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% if item_type == 'all' and all_items %}
+                        {% for itype, item in all_items.items %}
+                        <tr style="border-bottom:1px solid rgba(0,212,255,0.08);">
+                            <td>{{ item.id }}</td>
+                            <td>
+                                {% if itype == 'lost' %}
+                                <span class="badge" style="background:linear-gradient(135deg,#ff5252,#ff1744);">寻物</span>
+                                {% else %}
+                                <span class="badge" style="background:linear-gradient(135deg,#00c853,#64dd17);">招领</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ item.title[:25] }}{% if item.title|length > 25 %}...{% endif %}</td>
+                            <td>{{ item.owner.username if itype == 'lost' and item.owner else (item.finder.username if item.finder else '-') }}</td>
+                            <td>{{ item.location[:15] if item.location else '-' }}</td>
+                            <td>
+                                {% if item.audit_status == 'pending' %}
+                                <span class="badge bg-warning text-dark">待审核</span>
+                                {% elif item.audit_status == 'approved' %}
+                                <span class="badge" style="background:#00c853;">已通过</span>
+                                {% elif item.audit_status == 'rejected' %}
+                                <span class="badge bg-danger">已拒绝</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if item.status == 'open' %}
+                                <span style="color:#00d4ff;">进行中</span>
+                                {% elif item.status == 'closed' %}
+                                <span style="color:#a0a0b0;">已关闭</span>
+                                {% endif %}
+                            </td>
+                            <td style="color:#a0a0b0;font-size:0.85rem;">{{ item.created_at.strftime('%m-%d %H:%M') }}</td>
+                            <td>
+                                {% if item.audit_status == 'pending' %}
+                                <button class="btn btn-sm" style="background:#00c853;color:white;padding:2px 10px;" onclick="auditItem('{{ itype }}', {{ item.id }}, 'approve')">通过</button>
+                                <button class="btn btn-sm" style="background:#ff5252;color:white;padding:2px 10px;" onclick="auditItem('{{ itype }}', {{ item.id }}, 'reject')">拒绝</button>
+                                {% endif %}
+                                <button class="btn btn-sm" style="background:rgba(255,255,255,0.1);color:#ff5252;padding:2px 10px;" onclick="deleteItem('{{ itype }}', {{ item.id }})">删除</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% elif item_type == 'lost' and lost_items %}
+                        {% for item in lost_items.items %}
+                        <tr style="border-bottom:1px solid rgba(0,212,255,0.08);">
+                            <td>{{ item.id }}</td>
+                            <td><span class="badge" style="background:linear-gradient(135deg,#ff5252,#ff1744);">寻物</span></td>
+                            <td>{{ item.title[:25] }}{% if item.title|length > 25 %}...{% endif %}</td>
+                            <td>{{ item.owner.username if item.owner else '-' }}</td>
+                            <td>{{ item.location[:15] if item.location else '-' }}</td>
+                            <td>
+                                {% if item.audit_status == 'pending' %}
+                                <span class="badge bg-warning text-dark">待审核</span>
+                                {% elif item.audit_status == 'approved' %}
+                                <span class="badge" style="background:#00c853;">已通过</span>
+                                {% elif item.audit_status == 'rejected' %}
+                                <span class="badge bg-danger">已拒绝</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if item.status == 'open' %}
+                                <span style="color:#00d4ff;">进行中</span>
+                                {% else %}
+                                <span style="color:#a0a0b0;">已关闭</span>
+                                {% endif %}
+                            </td>
+                            <td style="color:#a0a0b0;font-size:0.85rem;">{{ item.created_at.strftime('%m-%d %H:%M') }}</td>
+                            <td>
+                                {% if item.audit_status == 'pending' %}
+                                <button class="btn btn-sm" style="background:#00c853;color:white;padding:2px 10px;" onclick="auditItem('lost', {{ item.id }}, 'approve')">通过</button>
+                                <button class="btn btn-sm" style="background:#ff5252;color:white;padding:2px 10px;" onclick="auditItem('lost', {{ item.id }}, 'reject')">拒绝</button>
+                                {% endif %}
+                                <button class="btn btn-sm" style="background:rgba(255,255,255,0.1);color:#ff5252;padding:2px 10px;" onclick="deleteItem('lost', {{ item.id }})">删除</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% elif item_type == 'found' and found_items %}
+                        {% for item in found_items.items %}
+                        <tr style="border-bottom:1px solid rgba(0,212,255,0.08);">
+                            <td>{{ item.id }}</td>
+                            <td><span class="badge" style="background:linear-gradient(135deg,#00c853,#64dd17);">招领</span></td>
+                            <td>{{ item.title[:25] }}{% if item.title|length > 25 %}...{% endif %}</td>
+                            <td>{{ item.finder.username if item.finder else '-' }}</td>
+                            <td>{{ item.location[:15] if item.location else '-' }}</td>
+                            <td>
+                                {% if item.audit_status == 'pending' %}
+                                <span class="badge bg-warning text-dark">待审核</span>
+                                {% elif item.audit_status == 'approved' %}
+                                <span class="badge" style="background:#00c853;">已通过</span>
+                                {% elif item.audit_status == 'rejected' %}
+                                <span class="badge bg-danger">已拒绝</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if item.status == 'open' %}
+                                <span style="color:#00d4ff;">进行中</span>
+                                {% else %}
+                                <span style="color:#a0a0b0;">已关闭</span>
+                                {% endif %}
+                            </td>
+                            <td style="color:#a0a0b0;font-size:0.85rem;">{{ item.created_at.strftime('%m-%d %H:%M') }}</td>
+                            <td>
+                                {% if item.audit_status == 'pending' %}
+                                <button class="btn btn-sm" style="background:#00c853;color:white;padding:2px 10px;" onclick="auditItem('found', {{ item.id }}, 'approve')">通过</button>
+                                <button class="btn btn-sm" style="background:#ff5252;color:white;padding:2px 10px;" onclick="auditItem('found', {{ item.id }}, 'reject')">拒绝</button>
+                                {% endif %}
+                                <button class="btn btn-sm" style="background:rgba(255,255,255,0.1);color:#ff5252;padding:2px 10px;" onclick="deleteItem('found', {{ item.id }})">删除</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr><td colspan="9" class="text-center" style="color:#a0a0b0;padding:30px;">暂无物品</td></tr>
+                    {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background:#0a0a1a;border:1px solid rgba(0,212,255,0.2);">
+            <div class="modal-header" style="border-bottom:1px solid rgba(0,212,255,0.15);">
+                <h5 class="modal-title" style="color:#ffffff;">拒绝原因</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <textarea id="rejectReason" class="form-control" rows="3" placeholder="请输入拒绝原因" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.25);color:#ffffff;"></textarea>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid rgba(0,212,255,0.15);">
+                <button type="button" class="btn" style="background:rgba(255,255,255,0.1);color:#d0d0e0;" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn" style="background:#ff5252;color:white;" onclick="confirmReject()">确认拒绝</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+var currentAuditType = '';
+var currentAuditId = 0;
+
+function auditItem(type, id, action) {
+    if (action === 'reject') {
+        currentAuditType = type;
+        currentAuditId = id;
+        new bootstrap.Modal(document.getElementById('rejectModal')).show();
+        return;
+    }
+    fetch(`/admin/item/${type}/${id}/audit`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+        body: JSON.stringify({action: action})
+    }).then(r => r.json()).then(data => {
+        if (data.success) { location.reload(); }
+        else { alert(data.message || '操作失败'); }
+    });
+}
+
+function confirmReject() {
+    var reason = document.getElementById('rejectReason').value;
+    fetch(`/admin/item/${currentAuditType}/${currentAuditId}/audit`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+        body: JSON.stringify({action: 'reject', reason: reason})
+    }).then(r => r.json()).then(data => {
+        if (data.success) { location.reload(); }
+        else { alert(data.message || '操作失败'); }
+    });
+}
+
+function deleteItem(type, id) {
+    if (!confirm('确定要删除该物品吗？')) return;
+    fetch(`/admin/item/${type}/${id}/delete`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken}
+    }).then(r => r.json()).then(data => {
+        if (data.success) { location.reload(); }
+        else { alert(data.message || '操作失败'); }
+    });
+}
+</script>
+{% endblock %}

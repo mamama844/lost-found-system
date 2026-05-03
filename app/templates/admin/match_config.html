@@ -1,0 +1,223 @@
+{% extends "admin/base.html" %}
+
+{% block title %}匹配参数配置 - 管理后台{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0"><i class="bi bi-sliders me-2"></i>智能匹配参数配置</h4>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">匹配算法参数</h5>
+                </div>
+                <div class="card-body">
+                    <form id="configForm">
+                        <div class="mb-4">
+                            <label class="form-label">匹配阈值</label>
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <input type="range" class="form-range" id="threshold" name="threshold" 
+                                           min="0.1" max="0.9" step="0.05" value="{{ configs.match_threshold }}">
+                                </div>
+                                <div class="col-auto">
+                                    <span id="thresholdValue" class="badge bg-primary fs-6">{{ (configs.match_threshold * 100)|round(0)|int }}%</span>
+                                </div>
+                            </div>
+                            <small class="text-muted">相似度达到此阈值才会创建匹配记录。建议值: 50%-70%</small>
+                        </div>
+                        
+                        <hr>
+                        <h6 class="mb-3">相似度权重配置（总和应为100%）</h6>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">文本相似度权重</label>
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <input type="range" class="form-range" id="text_weight" name="text_weight" 
+                                           min="0" max="1" step="0.05" value="{{ configs.text_weight }}">
+                                </div>
+                                <div class="col-auto">
+                                    <span id="textWeightValue" class="badge bg-info fs-6">{{ (configs.text_weight * 100)|round(0)|int }}%</span>
+                                </div>
+                            </div>
+                            <small class="text-muted">基于Jieba分词和TF-IDF的文本相似度权重</small>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">图像相似度权重</label>
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <input type="range" class="form-range" id="image_weight" name="image_weight" 
+                                           min="0" max="1" step="0.05" value="{{ configs.image_weight }}">
+                                </div>
+                                <div class="col-auto">
+                                    <span id="imageWeightValue" class="badge bg-success fs-6">{{ (configs.image_weight * 100)|round(0)|int }}%</span>
+                                </div>
+                            </div>
+                            <small class="text-muted">基于pHash感知哈希的图像相似度权重</small>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">类别匹配权重</label>
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <input type="range" class="form-range" id="category_weight" name="category_weight" 
+                                           min="0" max="1" step="0.05" value="{{ configs.category_weight }}">
+                                </div>
+                                <div class="col-auto">
+                                    <span id="categoryWeightValue" class="badge bg-warning fs-6">{{ (configs.category_weight * 100)|round(0)|int }}%</span>
+                                </div>
+                            </div>
+                            <small class="text-muted">类别匹配的基础权重（类别必须相同才能匹配）</small>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            当前权重总和: <strong id="totalWeight">{{ ((configs.text_weight + configs.image_weight + configs.category_weight) * 100)|round(0)|int }}%</strong>
+                            <span id="weightWarning" class="text-danger ms-2" style="display: none;">（建议总和为100%）</span>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-warning" onclick="rematchAll()" id="rematchBtn">
+                                <i class="bi bi-arrow-repeat me-1"></i>重新匹配全部
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="saveConfig()">
+                                <i class="bi bi-check-lg me-1"></i>保存配置
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">算法说明</h5>
+                </div>
+                <div class="card-body">
+                    <h6>匹配公式</h6>
+                    <div class="alert alert-light">
+                        <code>总分 = 文本相似度 × 文本权重 + 图像相似度 × 图像权重 + 类别匹配 × 类别权重</code>
+                    </div>
+                    
+                    <h6 class="mt-4">文本相似度</h6>
+                    <p class="small text-muted">
+                        使用Jieba分词将描述拆分为关键词，通过TF-IDF计算关键词权重，再用Jaccard相似度计算重叠程度。
+                    </p>
+                    
+                    <h6 class="mt-4">图像相似度</h6>
+                    <p class="small text-muted">
+                        使用pHash感知哈希算法，将图片转换为64位指纹，通过汉明距离计算相似度。可抵抗缩放、旋转、亮度变化。
+                    </p>
+                    
+                    <h6 class="mt-4">类别匹配</h6>
+                    <p class="small text-muted">
+                        类别必须相同才能进行匹配。如果类别不同，直接拒绝匹配，避免跨类别错误匹配。
+                    </p>
+                    
+                    <div class="alert alert-warning mt-4">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        修改参数后需要重新运行匹配才能生效
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updateValue(id, valueId, suffix = '%') {
+    const value = document.getElementById(id).value;
+    document.getElementById(valueId).textContent = Math.round(value * 100) + suffix;
+    updateTotalWeight();
+}
+
+function updateTotalWeight() {
+    const text = parseFloat(document.getElementById('text_weight').value);
+    const image = parseFloat(document.getElementById('image_weight').value);
+    const category = parseFloat(document.getElementById('category_weight').value);
+    const total = Math.round((text + image + category) * 100);
+    
+    document.getElementById('totalWeight').textContent = total + '%';
+    
+    const warning = document.getElementById('weightWarning');
+    if (total !== 100) {
+        warning.style.display = 'inline';
+    } else {
+        warning.style.display = 'none';
+    }
+}
+
+document.getElementById('threshold').addEventListener('input', function() {
+    updateValue('threshold', 'thresholdValue');
+});
+
+document.getElementById('text_weight').addEventListener('input', function() {
+    updateValue('text_weight', 'textWeightValue');
+});
+
+document.getElementById('image_weight').addEventListener('input', function() {
+    updateValue('image_weight', 'imageWeightValue');
+});
+
+document.getElementById('category_weight').addEventListener('input', function() {
+    updateValue('category_weight', 'categoryWeightValue');
+});
+
+function saveConfig() {
+    const data = {
+        threshold: parseFloat(document.getElementById('threshold').value),
+        text_weight: parseFloat(document.getElementById('text_weight').value),
+        image_weight: parseFloat(document.getElementById('image_weight').value),
+        category_weight: parseFloat(document.getElementById('category_weight').value)
+    };
+    
+    fetch('/admin/match/config', {
+        method: 'POST',
+        headers: Object.assign({'Content-Type': 'application/json'}, getCsrfHeaders()),
+        body: JSON.stringify(data)
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(result) {
+        if (result.success) {
+            alert('配置保存成功！点击"重新匹配全部"按钮使新配置生效。');
+        } else {
+            alert('保存失败：' + result.message);
+        }
+    });
+}
+
+function rematchAll() {
+    var btn = document.getElementById('rematchBtn');
+    if (!confirm('确定要重新匹配所有物品吗？这将清除所有待确认的匹配记录并重新计算。')) return;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-arrow-repeat me-1 spin"></i>匹配中...';
+    fetch('/admin/match/rematch-all', {
+        method: 'POST',
+        headers: Object.assign({'Content-Type': 'application/json'}, getCsrfHeaders())
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(result) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>重新匹配全部';
+        if (result.success) {
+            alert(result.message);
+        } else {
+            alert('重新匹配失败：' + result.message);
+        }
+    })
+    .catch(function(err) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>重新匹配全部';
+        alert('请求失败：' + err.message);
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,344 @@
+﻿﻿{% extends "base.html" %}
+
+{% block title %}城市失物招领智能匹配系统{% endblock %}
+
+{% block extra_css %}
+<style>
+.hero-bg {
+    background: linear-gradient(135deg, rgba(0,212,255,0.12) 0%, rgba(123,44,191,0.12) 50%, rgba(0,200,83,0.08) 100%);
+    border-radius: 20px;
+    padding: 50px 30px;
+    margin-bottom: 30px;
+    position: relative;
+    overflow: hidden;
+}
+.hero-bg::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 70%);
+    animation: pulse 8s ease-in-out infinite;
+}
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.1); opacity: 1; }
+}
+.stat-glow {
+    text-align: center;
+    padding: 25px 15px;
+    border-radius: 16px;
+    background: rgba(10,10,26,0.85);
+    border: 1px solid rgba(0,212,255,0.15);
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+}
+.stat-glow:hover {
+    transform: translateY(-8px);
+    border-color: rgba(0,212,255,0.4);
+    box-shadow: 0 15px 40px rgba(0,212,255,0.15);
+}
+.stat-glow .stat-icon-wrap {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    font-size: 1.5rem;
+}
+.stat-glow .stat-num {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.1;
+}
+.stat-glow .stat-label {
+    color:#a0a0b0;
+    font-size: 0.85rem;
+    margin-top: 4px;
+}
+.match-banner {
+    background: linear-gradient(135deg, rgba(0,200,83,0.15) 0%, rgba(0,212,255,0.15) 100%);
+    border: 1px solid rgba(0,200,83,0.25);
+    border-radius: 16px;
+    padding: 25px 30px;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+.match-banner .match-num {
+    font-size: 3rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #00c853, #00d4ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.item-row {
+    background: rgba(10,10,26,0.85);
+    border: 1px solid rgba(0,212,255,0.1);
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    transition: all 0.3s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.item-row:hover {
+    border-color: rgba(0,212,255,0.35);
+    background: rgba(10,10,26,0.95);
+    transform: translateX(5px);
+}
+.thank-card {
+    background: rgba(10,10,26,0.85);
+    border: 1px solid rgba(255,193,7,0.15);
+    border-radius: 12px;
+    padding: 18px;
+    transition: all 0.3s;
+}
+.thank-card:hover {
+    border-color: rgba(255,193,7,0.4);
+    transform: translateY(-3px);
+}
+.quick-card {
+    background: rgba(10,10,26,0.85);
+    border: 1px solid rgba(0,212,255,0.15);
+    border-radius: 16px;
+    padding: 30px 20px;
+    text-align: center;
+    transition: all 0.4s;
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+}
+.quick-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(0,212,255,0.4);
+    box-shadow: 0 15px 40px rgba(0,212,255,0.12);
+}
+.quick-card .qc-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    font-size: 2rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="hero-bg text-center position-relative">
+        <h1 style="color:#00d4ff;font-size:2.8rem;font-weight:800;letter-spacing:2px;">城市失物招领智能匹配系统</h1>
+        <p class="mt-3" style="color:#d0d0e0;font-size:1.15rem;">AI智能匹配 · 快速找回 · 让拾金不昧更高效</p>
+        <form method="GET" action="{{ url_for('main.search') }}" class="row justify-content-center mt-4">
+            <div class="col-md-7">
+                <div class="input-group">
+                    <input type="text" class="form-control" name="q" placeholder="搜索丢失或拾获的物品..." style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.3);color:#ffffff;border-radius:12px 0 0 12px;height:52px;font-size:1.1rem;">
+                    <button type="submit" class="btn" style="background:linear-gradient(135deg,#00d4ff,#7b2cbf);color:white;border:none;border-radius:0 12px 12px 0;height:52px;padding:0 35px;font-size:1.05rem;">
+                        <i class="bi bi-search me-1"></i>搜索
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-6 col-md-3 mb-3">
+            <div class="stat-glow">
+                <div class="stat-icon-wrap" style="background:linear-gradient(135deg,#ff5252,#ff1744);color:white;">
+                    <i class="bi bi-search-heart"></i>
+                </div>
+                <div class="stat-num" style="color:#ff5252;">{{ stats.lost_count }}</div>
+                <div class="stat-label">寻物启事</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+            <div class="stat-glow">
+                <div class="stat-icon-wrap" style="background:linear-gradient(135deg,#00c853,#64dd17);color:white;">
+                    <i class="bi bi-hand-thumbs-up"></i>
+                </div>
+                <div class="stat-num" style="color:#00c853;">{{ stats.found_count }}</div>
+                <div class="stat-label">失物招领</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+            <div class="stat-glow">
+                <div class="stat-icon-wrap" style="background:linear-gradient(135deg,#00d4ff,#7b2cbf);color:white;">
+                    <i class="bi bi-diagram-3"></i>
+                </div>
+                <div class="stat-num" style="color:#00d4ff;">{{ stats.confirmed_matches }}</div>
+                <div class="stat-label">匹配成功</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+            <div class="stat-glow">
+                <div class="stat-icon-wrap" style="background:linear-gradient(135deg,#ffc107,#ff9800);color:white;">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="stat-num" style="color:#ffc107;">{{ stats.total_users }}</div>
+                <div class="stat-label">注册用户</div>
+            </div>
+        </div>
+    </div>
+
+    {% if stats.confirmed_matches > 0 %}
+    <div class="match-banner">
+        <div>
+            <div class="match-num">{{ stats.confirmed_matches }}</div>
+        </div>
+        <div>
+            <h4 style="color:#ffffff;margin:0;font-weight:700;">匹配成功案例</h4>
+            <p style="color:#a0a0b0;margin:5px 0 0;">已有 <span style="color:#00c853;font-weight:700;">{{ stats.confirmed_matches }}</span> 对物品通过智能匹配成功找回，累计匹配 <span style="color:#00d4ff;font-weight:700;">{{ stats.total_matches }}</span> 次</p>
+        </div>
+        <div class="ms-auto">
+            <a href="{{ url_for('match.list_matches') }}" class="btn" style="background:linear-gradient(135deg,#00c853,#00d4ff);color:white;border-radius:25px;padding:10px 25px;">
+                <i class="bi bi-diagram-3 me-1"></i>查看匹配
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <a href="{{ url_for('lost.list_items') }}" class="quick-card">
+                <div class="qc-icon" style="background:linear-gradient(135deg,#ff5252,#ff1744);color:white;">
+                    <i class="bi bi-search-heart"></i>
+                </div>
+                <h5 style="color:#ffffff;font-weight:600;">寻物启事</h5>
+                <p style="color:#a0a0b0;font-size:0.9rem;">发布丢失物品信息，AI智能匹配帮您找回</p>
+                <span style="color:#ff5252;font-size:0.85rem;">今日新增 {{ stats.today_lost }} 条 <i class="bi bi-arrow-right"></i></span>
+            </a>
+        </div>
+        <div class="col-md-4 mb-3">
+            <a href="{{ url_for('found.list_items') }}" class="quick-card">
+                <div class="qc-icon" style="background:linear-gradient(135deg,#00c853,#64dd17);color:white;">
+                    <i class="bi bi-hand-thumbs-up"></i>
+                </div>
+                <h5 style="color:#ffffff;font-weight:600;">失物招领</h5>
+                <p style="color:#a0a0b0;font-size:0.9rem;">发布拾获物品信息，帮助他人找回失物</p>
+                <span style="color:#00c853;font-size:0.85rem;">今日新增 {{ stats.today_found }} 条 <i class="bi bi-arrow-right"></i></span>
+            </a>
+        </div>
+        <div class="col-md-4 mb-3">
+            <a href="{{ url_for('forum.index') }}" class="quick-card">
+                <div class="qc-icon" style="background:linear-gradient(135deg,#00d4ff,#7b2cbf);color:white;">
+                    <i class="bi bi-chat-dots"></i>
+                </div>
+                <h5 style="color:#ffffff;font-weight:600;">交流论坛</h5>
+                <p style="color:#a0a0b0;font-size:0.9rem;">交流寻物经验，分享感谢信，互助互爱</p>
+                <span style="color:#00d4ff;font-size:0.85rem;">进入论坛 <i class="bi bi-arrow-right"></i></span>
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <h5 style="color:#ff5252;margin-bottom:15px;"><i class="bi bi-search-heart me-2"></i>最新寻物</h5>
+            {% for item in recent_lost|default([]) %}
+            <a href="{{ url_for('lost.detail', id=item.id) }}" style="text-decoration:none;">
+                <div class="item-row">
+                    <div>
+                        <span style="color:#ffffff;font-weight:600;">{{ item.title[:28] }}{% if item.title|length > 28 %}...{% endif %}</span>
+                        <br><small style="color:#a0a0b0;"><i class="bi bi-geo-alt me-1"></i>{{ item.location[:18] if item.location else '-' }} · {{ item.created_at.strftime('%m-%d %H:%M') }}</small>
+                    </div>
+                    <span class="badge" style="background:linear-gradient(135deg,#ff5252,#ff1744);">寻找中</span>
+                </div>
+            </a>
+            {% else %}
+            <p style="color:#a0a0b0;">暂无寻物信息</p>
+            {% endfor %}
+        </div>
+        <div class="col-md-6 mb-4">
+            <h5 style="color:#00c853;margin-bottom:15px;"><i class="bi bi-hand-thumbs-up me-2"></i>最新招领</h5>
+            {% for item in recent_found|default([]) %}
+            <a href="{{ url_for('found.detail', id=item.id) }}" style="text-decoration:none;">
+                <div class="item-row">
+                    <div>
+                        <span style="color:#ffffff;font-weight:600;">{{ item.title[:28] }}{% if item.title|length > 28 %}...{% endif %}</span>
+                        <br><small style="color:#a0a0b0;"><i class="bi bi-geo-alt me-1"></i>{{ item.location[:18] if item.location else '-' }} · {{ item.created_at.strftime('%m-%d %H:%M') }}</small>
+                    </div>
+                    <span class="badge" style="background:linear-gradient(135deg,#00c853,#64dd17);">待认领</span>
+                </div>
+            </a>
+            {% else %}
+            <p style="color:#a0a0b0;">暂无招领信息</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if confirmed_match_list %}
+    <div class="mb-4">
+        <h5 style="color:#00c853;margin-bottom:15px;"><i class="bi bi-check-circle me-2"></i>已认领 · 成功找回</h5>
+        <div class="row">
+            {% for match in confirmed_match_list %}
+            <div class="col-md-4 mb-3">
+                <div style="background:rgba(10,10,26,0.85);border:1px solid rgba(0,200,83,0.2);border-radius:12px;padding:18px;">
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge me-2" style="background:linear-gradient(135deg,#ff5252,#ff1744);">丢失</span>
+                        <span style="color:#ffffff;font-weight:600;font-size:0.9rem;">{{ match.lost_item.title[:20] }}{% if match.lost_item.title|length > 20 %}...{% endif %}</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge me-2" style="background:linear-gradient(135deg,#00c853,#64dd17);">拾获</span>
+                        <span style="color:#ffffff;font-weight:600;font-size:0.9rem;">{{ match.found_item.title[:20] }}{% if match.found_item.title|length > 20 %}...{% endif %}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <small style="color:#a0a0b0;">匹配度 {{ (match.similarity_score * 100)|round(0)|int }}%</small>
+                        <span class="badge bg-success">已认领</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if thank_you_posts %}
+    <div class="mb-4">
+        <h5 style="color:#ffc107;margin-bottom:15px;"><i class="bi bi-emoji-smile me-2"></i>感谢信 · 成功找回的故事</h5>
+        <div class="row">
+            {% for post in thank_you_posts %}
+            <div class="col-md-4 mb-3">
+                <a href="{{ url_for('forum.detail', id=post.id) }}" style="text-decoration:none;">
+                    <div class="thank-card">
+                        <div class="d-flex align-items-center mb-2">
+                            <div style="width:35px;height:35px;border-radius:50%;background:linear-gradient(135deg,#ffc107,#ff9800);display:flex;align-items:center;justify-content:center;color:white;font-size:0.9rem;margin-right:10px;">{{ post.author.username[0]|upper if post.author else '?' }}</div>
+                            <div>
+                                <div style="color:#ffffff;font-size:0.9rem;font-weight:600;">{{ post.author.username if post.author else '匿名' }}</div>
+                                <div style="color:#a0a0b0;font-size:0.75rem;">{{ post.created_at.strftime('%Y-%m-%d') }}</div>
+                            </div>
+                        </div>
+                        <p style="color:#d0d0e0;font-size:0.9rem;margin:0;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">{{ post.content[:100] }}{% if post.content|length > 100 %}...{% endif %}</p>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div style="background:rgba(10,10,26,0.85);border:1px solid rgba(0,212,255,0.1);border-radius:16px;padding:25px;">
+                <h5 style="color:#00d4ff;margin-bottom:15px;"><i class="bi bi-tags me-2"></i>物品分类</h5>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for cat in categories %}
+                    <a href="{{ url_for('lost.list_items', category=cat.id) }}" class="badge" style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.2);color:#00d4ff;padding:8px 16px;border-radius:20px;font-size:0.9rem;text-decoration:none;transition:all 0.3s;">
+                        {% if cat.icon %}<i class="bi bi-{{ cat.icon }} me-1"></i>{% endif %}{{ cat.name }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

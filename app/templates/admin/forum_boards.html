@@ -1,0 +1,192 @@
+{% extends "admin/base.html" %}
+
+{% block title %}板块管理 - 管理后台{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0" style="color:#00d4ff;"><i class="bi bi-collection me-2"></i>板块管理</h4>
+        <button class="btn" style="background:linear-gradient(135deg,#00d4ff,#7b2cbf);color:white;" data-bs-toggle="modal" data-bs-target="#addModal">
+            <i class="bi bi-plus-lg me-1"></i>添加板块
+        </button>
+    </div>
+    
+    <div class="card" style="background:rgba(10,10,26,0.9);border:1px solid rgba(0,212,255,0.15);">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" style="color:#ffffff;">
+                    <thead>
+                        <tr style="border-bottom:1px solid rgba(0,212,255,0.15);">
+                            <th style="color:#a0a0b0;">ID</th>
+                            <th style="color:#a0a0b0;">名称</th>
+                            <th style="color:#a0a0b0;">描述</th>
+                            <th style="color:#a0a0b0;">图标</th>
+                            <th style="color:#a0a0b0;">排序</th>
+                            <th style="color:#a0a0b0;">状态</th>
+                            <th style="color:#a0a0b0;">帖子数</th>
+                            <th style="color:#a0a0b0;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for board in boards %}
+                        <tr style="border-bottom:1px solid rgba(0,212,255,0.08);">
+                            <td>{{ board.id }}</td>
+                            <td style="color:#00d4ff;font-weight:600;">{{ board.name }}</td>
+                            <td style="color:#d0d0e0;">{{ board.description or '-' }}</td>
+                            <td>{% if board.icon %}<i class="bi bi-{{ board.icon }}" style="color:#00d4ff;"></i>{% else %}-{% endif %}</td>
+                            <td>{{ board.sort_order }}</td>
+                            <td>
+                                {% if board.is_active %}
+                                <span class="badge" style="background:#00c853;">启用</span>
+                                {% else %}
+                                <span class="badge" style="background:#808090;">禁用</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ board.posts|length if board.posts is defined else 0 }}</td>
+                            <td>
+                                <button class="btn btn-sm" style="background:rgba(0,212,255,0.15);color:#00d4ff;padding:2px 10px;" onclick="editBoard({{ board.id }}, '{{ board.name }}', '{{ board.description or '' }}', '{{ board.icon or '' }}', {{ board.sort_order }}, {{ 'true' if board.is_active else 'false' }})">编辑</button>
+                                <button class="btn btn-sm" style="background:rgba(255,82,82,0.15);color:#ff5252;padding:2px 10px;" onclick="deleteBoard({{ board.id }})">删除</button>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="8" class="text-center" style="color:#a0a0b0;padding:30px;">暂无板块</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background:#0a0a1a;border:1px solid rgba(0,212,255,0.2);">
+            <div class="modal-header" style="border-bottom:1px solid rgba(0,212,255,0.15);">
+                <h5 class="modal-title" style="color:#ffffff;">添加板块</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label style="color:#d0d0e0;">板块名称 *</label>
+                    <input type="text" id="addName" class="form-control" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.25);color:#ffffff;">
+                </div>
+                <div class="mb-3">
+                    <label style="color:#d0d0e0;">描述</label>
+                    <textarea id="addDesc" class="form-control" rows="2" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.25);color:#ffffff;"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label style="color:#d0d0e0;">图标</label>
+                    <input type="text" id="addIcon" class="form-control" placeholder="如: chat, info, heart" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.25);color:#ffffff;">
+                </div>
+                <div class="mb-3">
+                    <label style="color:#d0d0e0;">排序</label>
+                    <input type="number" id="addSort" class="form-control" value="0" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.25);color:#ffffff;">
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid rgba(0,212,255,0.15);">
+                <button type="button" class="btn" style="background:rgba(255,255,255,0.1);color:#d0d0e0;" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn" style="background:linear-gradient(135deg,#00d4ff,#7b2cbf);color:white;" onclick="addBoard()">添加</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background:#0a0a1a;border:1px solid rgba(0,212,255,0.2);">
+            <div class="modal-header" style="border-bottom:1px solid rgba(0,212,255,0.15);">
+                <h5 class="modal-title" style="color:#ffffff;">编辑板块</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editId">
+                <div class="mb-3">
+                    <label style="color:#d0d0e0;">板块名称 *</label>
+                    <input type="text" id="editName" class="form-control" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.25);color:#ffffff;">
+                </div>
+                <div class="mb-3">
+                    <label style="color:#d0d0e0;">描述</label>
+                    <textarea id="editDesc" class="form-control" rows="2" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.25);color:#ffffff;"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label style="color:#d0d0e0;">图标</label>
+                    <input type="text" id="editIcon" class="form-control" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.25);color:#ffffff;">
+                </div>
+                <div class="mb-3">
+                    <label style="color:#d0d0e0;">排序</label>
+                    <input type="number" id="editSort" class="form-control" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.25);color:#ffffff;">
+                </div>
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="editActive" checked>
+                        <label class="form-check-label" style="color:#d0d0e0;">启用</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid rgba(0,212,255,0.15);">
+                <button type="button" class="btn" style="background:rgba(255,255,255,0.1);color:#d0d0e0;" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn" style="background:linear-gradient(135deg,#00d4ff,#7b2cbf);color:white;" onclick="saveBoard()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function addBoard() {
+    var name = document.getElementById('addName').value.trim();
+    if (!name) { alert('请输入板块名称'); return; }
+    fetch('/admin/forum-board/add', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+        body: JSON.stringify({
+            name: name,
+            description: document.getElementById('addDesc').value.trim(),
+            icon: document.getElementById('addIcon').value.trim(),
+            sort_order: parseInt(document.getElementById('addSort').value) || 0
+        })
+    }).then(r => r.json()).then(data => {
+        if (data.success) { location.reload(); }
+        else { alert(data.message || '添加失败'); }
+    }).catch(e => alert('请求失败: ' + e));
+}
+
+function editBoard(id, name, desc, icon, sort, active) {
+    document.getElementById('editId').value = id;
+    document.getElementById('editName').value = name;
+    document.getElementById('editDesc').value = desc;
+    document.getElementById('editIcon').value = icon;
+    document.getElementById('editSort').value = sort;
+    document.getElementById('editActive').checked = active;
+    new bootstrap.Modal(document.getElementById('editModal')).show();
+}
+
+function saveBoard() {
+    var id = document.getElementById('editId').value;
+    fetch('/admin/forum-board/' + id + '/edit', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+        body: JSON.stringify({
+            name: document.getElementById('editName').value.trim(),
+            description: document.getElementById('editDesc').value.trim(),
+            icon: document.getElementById('editIcon').value.trim(),
+            sort_order: parseInt(document.getElementById('editSort').value) || 0,
+            is_active: document.getElementById('editActive').checked
+        })
+    }).then(r => r.json()).then(data => {
+        if (data.success) { location.reload(); }
+        else { alert(data.message || '修改失败'); }
+    }).catch(e => alert('请求失败: ' + e));
+}
+
+function deleteBoard(id) {
+    if (!confirm('确定要删除该板块吗？')) return;
+    fetch('/admin/forum-board/' + id + '/delete', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken}
+    }).then(r => r.json()).then(data => {
+        if (data.success) { location.reload(); }
+        else { alert(data.message || '删除失败'); }
+    }).catch(e => alert('请求失败: ' + e));
+}
+</script>
+{% endblock %}

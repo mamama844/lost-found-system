@@ -1,0 +1,136 @@
+{% extends "admin/base.html" %}
+
+{% block title %}操作日志 - 管理后台{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0" style="color:#00d4ff;"><i class="bi bi-clock-history me-2"></i>操作日志</h4>
+        <div>
+            <a href="{{ url_for('admin.export_logs') }}" class="btn" style="background:rgba(0,200,83,0.15);color:#00c853;border:1px solid rgba(0,200,83,0.3);">
+                <i class="bi bi-download me-1"></i>导出
+            </a>
+            <button class="btn" style="background:rgba(255,82,82,0.15);color:#ff5252;border:1px solid rgba(255,82,82,0.3);" onclick="cleanupLogs()">
+                <i class="bi bi-trash me-1"></i>清理
+            </button>
+        </div>
+    </div>
+    
+    <div class="card" style="background:rgba(10,10,26,0.9);border:1px solid rgba(0,212,255,0.15);">
+        <div class="card-header" style="background:rgba(10,10,26,0.95);border-bottom:1px solid rgba(0,212,255,0.15);">
+            <form method="GET" class="row g-2">
+                <div class="col-auto">
+                    <select name="action" class="form-select" style="background:rgba(255,255,255,0.08);border:1px solid rgba(0,212,255,0.25);color:#ffffff;">
+                        <option value="">全部操作</option>
+                        <option value="login" {% if action == 'login' %}selected{% endif %}>登录</option>
+                        <option value="logout" {% if action == 'logout' %}selected{% endif %}>登出</option>
+                        <option value="register" {% if action == 'register' %}selected{% endif %}>注册</option>
+                        <option value="change_password" {% if action == 'change_password' %}selected{% endif %}>修改密码</option>
+                        <option value="edit_profile" {% if action == 'edit_profile' %}selected{% endif %}>修改信息</option>
+                        <option value="admin_login" {% if action == 'admin_login' %}selected{% endif %}>管理员登录</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn" style="background:linear-gradient(135deg,#00d4ff,#7b2cbf);color:white;">筛选</button>
+                    <a href="{{ url_for('admin.logs') }}" class="btn" style="background:rgba(255,255,255,0.08);color:#d0d0e0;border:1px solid rgba(0,212,255,0.2);">重置</a>
+                </div>
+            </form>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" style="color:#ffffff;">
+                    <thead>
+                        <tr style="border-bottom:1px solid rgba(0,212,255,0.15);">
+                            <th style="color:#a0a0b0;">ID</th>
+                            <th style="color:#a0a0b0;">用户</th>
+                            <th style="color:#a0a0b0;">操作类型</th>
+                            <th style="color:#a0a0b0;">详情</th>
+                            <th style="color:#a0a0b0;">IP地址</th>
+                            <th style="color:#a0a0b0;">时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs.items %}
+                        <tr style="border-bottom:1px solid rgba(0,212,255,0.08);">
+                            <td>{{ log.id }}</td>
+                            <td>
+                                {% if log.user %}
+                                <span style="color:#00d4ff;">{{ log.user.username }}</span>
+                                {% else %}
+                                <span style="color:#a0a0b0;">已删除</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if log.action == 'login' %}
+                                <span class="badge" style="background:rgba(0,212,255,0.15);color:#00d4ff;">登录</span>
+                                {% elif log.action == 'logout' %}
+                                <span class="badge" style="background:rgba(128,128,144,0.2);color:#a0a0b0;">登出</span>
+                                {% elif log.action == 'register' %}
+                                <span class="badge" style="background:rgba(0,200,83,0.15);color:#00c853;">注册</span>
+                                {% elif log.action == 'change_password' %}
+                                <span class="badge" style="background:rgba(255,193,7,0.15);color:#ffc107;">修改密码</span>
+                                {% elif log.action == 'edit_profile' %}
+                                <span class="badge" style="background:rgba(0,212,255,0.15);color:#00d4ff;">修改信息</span>
+                                {% elif log.action == 'admin_login' %}
+                                <span class="badge" style="background:rgba(255,82,82,0.15);color:#ff5252;">管理员登录</span>
+                                {% else %}
+                                <span class="badge" style="background:rgba(128,128,144,0.2);color:#a0a0b0;">{{ log.action }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small style="color:#d0d0e0;">{{ log.detail or '-' }}</small>
+                            </td>
+                            <td>
+                                <code style="color:#a0a0b0;">{{ log.ip_address or '-' }}</code>
+                            </td>
+                            <td style="color:#a0a0b0;font-size:0.85rem;">{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center" style="color:#a0a0b0;padding:30px;">暂无日志记录</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if logs.pages > 1 %}
+            <nav>
+                <ul class="pagination justify-content-center">
+                    {% if logs.has_prev %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('admin.logs', page=logs.prev_num, action=action) }}" style="background:rgba(10,10,26,0.9);color:#00d4ff;border-color:rgba(0,212,255,0.15);">上一页</a></li>
+                    {% endif %}
+                    {% for page_num in logs.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                        {% if page_num %}
+                        <li class="page-item {% if page_num == logs.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('admin.logs', page=page_num, action=action) }}" style="background:rgba(10,10,26,0.9);color:#00d4ff;border-color:rgba(0,212,255,0.15);">{{ page_num }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled"><span class="page-link" style="background:rgba(10,10,26,0.9);color:#a0a0b0;border-color:rgba(0,212,255,0.15);">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if logs.has_next %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('admin.logs', page=logs.next_num, action=action) }}" style="background:rgba(10,10,26,0.9);color:#00d4ff;border-color:rgba(0,212,255,0.15);">下一页</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function cleanupLogs() {
+    var days = prompt('清理多少天前的日志？', '90');
+    if (!days) return;
+    fetch('/admin/logs/cleanup', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+        body: JSON.stringify({days: parseInt(days)})
+    }).then(r => r.json()).then(data => {
+        if (data.success) { alert(data.message); location.reload(); }
+        else { alert(data.message || '清理失败'); }
+    }).catch(e => alert('请求失败: ' + e));
+}
+</script>
+{% endblock %}
